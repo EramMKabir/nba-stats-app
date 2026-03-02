@@ -227,7 +227,7 @@ For this app, you'll need:
 
 [contributors-url]: https://github.com/EramMKabir/nba-stats-app/graphs/contributors
 
-[stars-shield]: https://img.shields.io/github/stars/EramMKabir/nba-stats-app?style=for-the-badge
+[stars-shield]: https://img.shields.io/github/stars/EramMKabir/nba-stats-app.svg?style=for-the-badge
 
 [stars-url]: https://github.com/EramMKabir/nba-stats-app/stargazers
 
