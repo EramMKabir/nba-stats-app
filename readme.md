@@ -13,7 +13,7 @@
 <br />
 
   <a href="https://github.com/EramMKabir/nba-stats-app">
-    <img src="nba-stats-frontend/nba-stats-app-logo.png" alt="Logo" width="100" height="100">
+    <img src="nba-stats-app/nba-stats-frontend/nba-stats-app-logo.png" alt="Logo" width="100" height="100">
   </a>
 
 <br />
@@ -80,19 +80,19 @@
 <div align="center">
   <div style="margin-bottom: 20px;">
     <p><strong>Logging in with Google</strong></p>
-    <img src="nba-stats-frontend/gifs/LoggingIn.gif" width="75%">
+    <img src="nba-stats-app/nba-stats-frontend/gifs/LoggingIn.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Calculating Player Stats</strong></p>
-    <img src="nba-stats-frontend/gifs/PlayerStatsCalculation.gif" width="75%">
+    <img src="nba-stats-app/nba-stats-frontend/gifs/PlayerStatsCalculation.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Calculating Matchup Stats</strong></p>
-    <img src="nba-stats-frontend/gifs/MatchupStatsCalculation.gif" width="75%">
+    <img src="nba-stats-app/nba-stats-frontend/gifs/MatchupStatsCalculation.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Seeing Upcoming Games and Stats</strong></p>
-    <img src="nba-stats-frontend/gifs/UpcomingGames.gif" width="75%">
+    <img src="nba-stats-app/nba-stats-frontend/gifs/UpcomingGames.gif" width="75%">
   </div>
 </div>
 
