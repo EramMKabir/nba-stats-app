@@ -80,48 +80,21 @@
 <div align="center">
   <div style="margin-bottom: 20px;">
     <p><strong>Logging in with Google</strong></p>
-    <video class="scroll-video" muted loop playsinline preload="metadata">
-      <source src="nba-stats-app/nba-stats-frontend/mp4s/LoggingIn.mp4" type="video/mp4">
-    </video>
+    <img src="nba-stats-app/nba-stats-frontend/gifs/LoggingIn.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Calculating Player Stats</strong></p>
-    <video class="scroll-video" muted loop playsinline preload="metadata">
-      <source src="nba-stats-app/nba-stats-frontend/mp4s/PlayerStatsCalculation.mp4" type="video/mp4">
-    </video>
+    <img src="nba-stats-app/nba-stats-frontend/gifs/PlayerStatsCalculation.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Calculating Matchup Stats</strong></p>
-    <video class="scroll-video" muted loop playsinline preload="metadata">
-      <source src="nba-stats-app/nba-stats-frontend/mp4s/TeamStatsCalculation.mp4" type="video/mp4">
-    </video>
+    <img src="nba-stats-app/nba-stats-frontend/gifs/MatchupStatsCalculation.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Seeing Upcoming Games and Stats</strong></p>
-    <video class="scroll-video" muted loop playsinline preload="metadata">
-      <source src="nba-stats-app/nba-stats-frontend/mp4s/UpcomingGames.mp4" type="video/mp4">
-    </video>
+    <img src="nba-stats-app/nba-stats-frontend/gifs/UpcomingGames.gif" width="75%">
   </div>
 </div>
-
-<script>
-  const videos = document.querySelectorAll('.scroll-video');
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.play();
-      } else {
-        entry.target.pause();
-      }
-    });
-  }, { threshold: 0.01 });
-
-  videos.forEach(video => {
-    observer.observe(video);
-  });
-</script>
-
 
 ## Getting Started
 
