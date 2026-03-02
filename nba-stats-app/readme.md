@@ -13,7 +13,7 @@
 <br />
 
   <a href="https://github.com/EramMKabir/nba-stats-app">
-    <img src="nba-stats-app/nba-stats-frontend/nba-stats-app-logo.png" alt="Logo">
+    <img src="nba-stats-frontend/nba-stats-app-logo.png" alt="Logo" width="100" height="100">
   </a>
 
 <br />
