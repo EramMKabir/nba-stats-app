@@ -236,7 +236,7 @@ For this app, you'll need:
 
 [issues-url]: https://github.com/EramMKabir/nba-stats-app/issues
 
-[license-shield]: https://img.shields.io/github/license/EramMKabir/nba-stats-app.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/EramMKabir/nba-stats-app?style=for-the-badge
 
 [license-url]: https://github.com/EramMKabir/nba-stats-app/blob/main/LICENSE
 
