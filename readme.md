@@ -223,7 +223,7 @@ For this app, you'll need:
 
 <p align="right">(<a href="#readme-top">Back to Top</a>)</p>
 
-[contributors-shield]: https://img.shields.io/github/contributors/EramMKabir/nba-stats-app?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/EramMKabir/nba-stats-app.svg?style=for-the-badge
 
 [contributors-url]: https://github.com/EramMKabir/nba-stats-app/graphs/contributors
 
@@ -231,15 +231,15 @@ For this app, you'll need:
 
 [stars-url]: https://github.com/EramMKabir/nba-stats-app/stargazers
 
-[issues-shield]: https://img.shields.io/github/issues/EramMKabir/nba-stats-app?style=for-the-badge
+[issues-shield]: https://img.shields.io/github/issues/EramMKabir/nba-stats-app.svg?style=for-the-badge
 
 [issues-url]: https://github.com/EramMKabir/nba-stats-app/issues
 
-[license-shield]: https://img.shields.io/github/license/EramMKabir/nba-stats-app?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/EramMKabir/nba-stats-app.svg?style=for-the-badge
 
 [license-url]: https://github.com/EramMKabir/nba-stats-app/blob/main/LICENSE
 
-[linkedin-shield]: https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white
+[linkedin-shield]: https://img.shields.io/badge/LinkedIn-0077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white
 
 [linkedin-url]: https://www.linkedin.com/in/eram-kabir/
 
@@ -263,30 +263,30 @@ For this app, you'll need:
 
 [FastAPI-url]: https://fastapi.tiangolo.com
 
-[Python]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
+[Python]: https://img.shields.io/badge/python-3670A0.svg?style=for-the-badge&logo=python&logoColor=ffdd54
 
 [Python-url]: https://www.python.org/
 
-[Cython]: https://img.shields.io/badge/cython-3670A0?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAgCAMAAABAUVr7AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAAlwSFlzAAACaAAAAmgBN/2/ewAAAMxQTFRFR3BMZGRkbGxsZGRk/+VpZGRkZGRkZGRkZmZmZGRkZmZmZWVlZGRk/9lIZGRkZGRkN3KiM22d/9xPZGRk/9lGXmVrZGRkZGRkU3ubbm5uRIO0/+hy/+ZrOXWl/9hKZWVl/9Y/oaGh/+Nl/udzMWua/9U9ZGRkSYm7SYm8Q4GyQHmi/9U/bnqASYm6Roa4/+Vq/9dDN2+a/9dD/9Y/SIm7/9Q6R4W4ZGRkP32u/9tNPHip/+Jg/95XQ4K0/+hx/9ZBNXCfOXSlR4e5MGqZp6n8eQAAADd0Uk5TAPES5f531ChaG0Uzmt/6yNmpjK9yBoamCQLruteRBWj2H8h459a6q9NpY74OHEefTngcHllYgqUactcAAAHUSURBVDjLZZTrYoIwDIULyEVkyFQQnYjTeddNd3PMC8re/52WJmHCPL9K+dqcpGmFuMqM23VN2bmK0QxsX9xI1Y1dUYpTKwMdXdndqF0tENV6vnbiBM5Ey7+sP6LGc227Q3vajkszQU5QEAODh+t1KOfYmU5GaQ8DIq+n3ex4/OpGoVCZwVhNimvCcDqbA/H1fYnAH61UYKVd2HH26XclcfHgw6IfTSEoGWWFyJGI8xM6IAmTk0Fb7/P5fPF9OROSSyckFu+zLJM+JPHzNDpVXvqMTAipPWeZTIYIRCotRji36vRKAOI1KpX9kBEubIgFQatA/Gx7+/3hwJG40iER3j1q8SKJ5JUQPuEVEtHoQWq4ByJJkreSF1UWxBudQOBCbpGkg345oylYjYZFIl2y3YBP6xmSiXp/ABDphhE+IkcsPG/bk8QdaZyXRfjkV8Nm6kmfDVCr1LYObWMTgi7Gg7sSYlJl6nI85Exa43L3B9f2apHPBvqgVjNkm/pUGk223WY5SNPB8gOGMc66dJu4BZER/dc3rFjsXltX2uE21VX1UWrVMSmKa91cNaWtW7YVB/yp2QXLPl9Yt3hhner/a6/9u/bm7dsgajo+Hgo8Hnrh8fgFwll7OfJ+FK4AAAAASUVORK5CYII=&logoColor=ffdd54
+[Cython]: https://img.shields.io/badge/cython-3670A0.svg?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAAgCAMAAABAUVr7AAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAAlwSFlzAAACaAAAAmgBN/2/ewAAAMxQTFRFR3BMZGRkbGxsZGRk/+VpZGRkZGRkZGRkZmZmZGRkZmZmZWVlZGRk/9lIZGRkZGRkN3KiM22d/9xPZGRk/9lGXmVrZGRkZGRkU3ubbm5uRIO0/+hy/+ZrOXWl/9hKZWVl/9Y/oaGh/+Nl/udzMWua/9U9ZGRkSYm7SYm8Q4GyQHmi/9U/bnqASYm6Roa4/+Vq/9dDN2+a/9dD/9Y/SIm7/9Q6R4W4ZGRkP32u/9tNPHip/+Jg/95XQ4K0/+hx/9ZBNXCfOXSlR4e5MGqZp6n8eQAAADd0Uk5TAPES5f531ChaG0Uzmt/6yNmpjK9yBoamCQLruteRBWj2H8h459a6q9NpY74OHEefTngcHllYgqUactcAAAHUSURBVDjLZZTrYoIwDIULyEVkyFQQnYjTeddNd3PMC8re/52WJmHCPL9K+dqcpGmFuMqM23VN2bmK0QxsX9xI1Y1dUYpTKwMdXdndqF0tENV6vnbiBM5Ey7+sP6LGc227Q3vajkszQU5QEAODh+t1KOfYmU5GaQ8DIq+n3ex4/OpGoVCZwVhNimvCcDqbA/H1fYnAH61UYKVd2HH26XclcfHgw6IfTSEoGWWFyJGI8xM6IAmTk0Fb7/P5fPF9OROSSyckFu+zLJM+JPHzNDpVXvqMTAipPWeZTIYIRCotRji36vRKAOI1KpX9kBEubIgFQatA/Gx7+/3hwJG40iER3j1q8SKJ5JUQPuEVEtHoQWq4ByJJkreSF1UWxBudQOBCbpGkg345oylYjYZFIl2y3YBP6xmSiXp/ABDphhE+IkcsPG/bk8QdaZyXRfjkV8Nm6kmfDVCr1LYObWMTgi7Gg7sSYlJl6nI85Exa43L3B9f2apHPBvqgVjNkm/pUGk223WY5SNPB8gOGMc66dJu4BZER/dc3rFjsXltX2uE21VX1UWrVMSmKa91cNaWtW7YVB/yp2QXLPl9Yt3hhner/a6/9u/bm7dsgajo+Hgo8Hnrh8fgFwll7OfJ+FK4AAAAASUVORK5CYII=&logoColor=ffdd54
 
 [Cython-url]: https://www.cython.org/
 
-[XGBoost]: https://img.shields.io/badge/xgboost-3670A0?style=for-the-badge
+[XGBoost]: https://img.shields.io/badge/xgboost-3670A0.svg?style=for-the-badge
 
 [XGBoost-url]: https://xgboost.ai
 
-[Google Cloud Platform]: https://img.shields.io/badge/Google%20Cloud%20Platform-3670A0?style=for-the-badge&logo=google%20cloud&logoColor=ffdd54
+[Google Cloud Platform]: https://img.shields.io/badge/Google%20Cloud%20Platform-3670A0.svg?style=for-the-badge&logo=google%20cloud&logoColor=ffdd54
 
 [Google Cloud Platform-url]: https://cloud.google.com
 
-[PostgreSQL]: https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white
+[PostgreSQL]: https://img.shields.io/badge/postgresql-4169e1.svg?style=for-the-badge&logo=postgresql&logoColor=white
 
 [PostgreSQL-url]: https://www.postgresql.org
 
-[nba_api]: https://img.shields.io/badge/nba_api-3670A0?style=for-the-badge
+[nba_api]: https://img.shields.io/badge/nba_api-3670A0.svg?style=for-the-badge
 
 [nba_api-url]: https://github.com/swar/nba_api
 
-[OAuth2]: https://img.shields.io/badge/oauth2-3670A0?style=for-the-badge
+[OAuth2]: https://img.shields.io/badge/oauth2-3670A0.svg?style=for-the-badge
 
 [OAuth2-url]: https://oauth.net/2/
