@@ -88,7 +88,7 @@
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Calculating Matchup Stats</strong></p>
-    <img src="nba-stats-app/nba-stats-frontend/gifs/MatchupStatsCalculation.gif" width="75%">
+    <img src="nba-stats-app/nba-stats-frontend/gifs/TeamStatsCalculation.gif" width="75%">
   </div>
   <div style="margin-bottom: 20px;">
     <p><strong>Seeing Upcoming Games and Stats</strong></p>
