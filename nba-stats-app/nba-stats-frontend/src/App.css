@@ -1,0 +1,162 @@
+@media screen and (max-width: 600px) {
+  #root {
+  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  --text-primary: #111111;
+  --border-color: #111111;
+  }
+
+  [data-theme="dark"] {
+    --text-primary: #ffffff;
+    --border-color: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #root {
+      --text-primary: #ffffff;
+      --border-color: #ffffff;
+    }
+  }
+
+  .tableStats {
+    width: 100%;
+    overflow-x: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .NBAInputFullName, .NBAInputTeam, .NBAInputSeason, .NBAInputSeasonType, .NBAInputOpposingTeam, .NBAInputRecentGames {
+    font-size: 16px;
+  }
+
+  td, th {
+    display: block;
+  }
+
+  .topleft {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+  }
+
+  .greenText {
+    color: green;
+  }
+
+  .redText {
+    color: red;
+  }
+
+  .whiteAutoComplete, .whiteAutoComplete * {
+    font-size: 16px;
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .whiteAutoComplete .MuiInputBase-input {
+    color: var(--text-primary);
+  }
+
+  .whiteAutoComplete .MuiInputLabel-root {
+    color: var(--text-primary);
+  }
+
+  .whiteAutoComplete .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-color);
+  }
+
+  .whiteAutoComplete .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-color);
+  }
+
+}
+
+@media screen and (min-width: 601px) {
+  #root {
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+    min-width: 90vw;
+    min-height: 90vh;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    --text-primary: #111111;
+    --border-color: #111111;
+  }
+
+  [data-theme="dark"] {
+    --text-primary: #ffffff;
+    --border-color: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #root {
+      --text-primary: #ffffff;
+      --border-color: #ffffff;
+    }
+  }
+
+  .tableStats {
+    width: 100%;
+    overflow-x: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .topleft {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+  }
+
+  .greenText {
+    color: green;
+  }
+
+  .redText {
+    color: red;
+  }
+
+  .whiteAutoComplete, .whiteAutoComplete * {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+
+  .whiteAutoComplete .MuiInputBase-input {
+    color: var(--text-primary);
+  }
+
+  .whiteAutoComplete .MuiInputLabel-root {
+    color: var(--text-primary);
+  }
+
+  .whiteAutoComplete .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-color);
+  }
+
+  .whiteAutoComplete .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-color);
+  }
+
+}
