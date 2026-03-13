@@ -536,7 +536,9 @@ async def exchange_code(request: Request, data: OAuthRequest):
                           VALUES ($1, $2) \
                           ON CONFLICT (username, email) DO NOTHING", username, email)
 
-    app_token = jwt.encode(jwt_payload, secret_key, algorithm=algorithm)
+    secure_key = secrets.token_urlsafe(32)
+
+    app_token = jwt.encode(jwt_payload, secure_key, algorithm=algorithm)
 
     return JSONResponse(content={"token": app_token, "email": email, "user": username})
 
