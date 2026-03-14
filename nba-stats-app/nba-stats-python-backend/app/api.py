@@ -90,8 +90,6 @@ connection_string = f"postgresql://{postgres_user}:{os.getenv("POSTGRES_PASSWORD
 # the .env file to connect to Google Cloud 
 # (Google Cloud will be used for user logins).
 
-secret_key = os.getenv("SECRET")
-
 google_client_id = os.getenv("GOOGLE_CLIENT_ID")
 
 google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -111,6 +109,8 @@ redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"))
 oauth_server_url = os.getenv("OAUTH_SERVER_URL")
 
 code_challenge_method = os.getenv("CODE_CHALLENGE_METHOD")
+
+secure_key = secrets.token_urlsafe(32)
 
 oauth = OAuth() #Google login method
 
@@ -331,7 +331,7 @@ def get_current_user(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid Authorization header")
 
     try:
-        session_data = jwt.decode(token, secret_key, algorithms=[algorithm])
+        session_data = jwt.decode(token, secure_key, algorithms=[algorithm])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
@@ -535,8 +535,6 @@ async def exchange_code(request: Request, data: OAuthRequest):
         await cur.execute("INSERT INTO users (username, email) \
                           VALUES ($1, $2) \
                           ON CONFLICT (username, email) DO NOTHING", username, email)
-
-    secure_key = secrets.token_urlsafe(32)
 
     app_token = jwt.encode(jwt_payload, secure_key, algorithm=algorithm)
 
