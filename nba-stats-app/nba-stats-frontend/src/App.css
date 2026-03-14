@@ -95,7 +95,7 @@
     background-position: center;
     background-repeat: no-repeat;
     min-height: 100%;
-    width: 100%;
+    min-width: 100%;
   }
 
 }
@@ -188,7 +188,7 @@
     background-position: center;
     background-repeat: no-repeat;
     min-height: 100%;
-    width: 100%;
+    min-width: 100%;
   }
 
 }
