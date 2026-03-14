@@ -238,7 +238,7 @@ function App() {
     const teamStatsPageDisplay = !helpDisplay && user && teamStats;
     const OAuthDisplay = !helpDisplay && !user && !loadingLogout;
     return (
-      <div>
+      <div className="basketball-background">
         {titleDisplay && <h1>
                           <span>
                             NBA Projected Stat Calculator
