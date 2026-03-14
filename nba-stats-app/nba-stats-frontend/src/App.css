@@ -82,12 +82,20 @@
     border-color: var(--border-color);
   }
 
+  html, body, #root {
+    min-width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
   .basketball-background {
     background-image: url('./images/nba-stats-app-logo.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     height: 100vh;
+    width: 100vw;
   }
 
 }
@@ -167,12 +175,20 @@
     border-color: var(--border-color);
   }
 
+  html, body, #root {
+    min-width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+
   .basketball-background {
     background-image: url('./images/nba-stats-app-logo.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     height: 100vh;
+    width: 100vw;
   }
 
 }
