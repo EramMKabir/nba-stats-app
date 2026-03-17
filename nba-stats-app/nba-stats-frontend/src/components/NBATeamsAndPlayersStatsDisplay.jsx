@@ -33,7 +33,7 @@ Space complexity: O(n*m)
 
 /* Libraries and Functions */
 
-import { setNoPlayersOrTeams, setPlayerStats } from "../reducers/booleanReducer";
+import { setNoPlayersOrTeams, setUpcomingGamesStats } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
@@ -111,7 +111,7 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
 
     /* Function to navigate to home tab. */
     const navToHome = () => {
-      dispatch(setPlayerStats(false))
+      dispatch(setUpcomingGamesStats(false))
       navigate('/');
     };
 

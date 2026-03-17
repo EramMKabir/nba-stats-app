@@ -41,7 +41,7 @@ import RatioDictionaryDisplay from "./components/RatioDictionaryDisplay";
 import Help from "./components/Help";
 import calculatedPlayerStatsService from "./services/calculatedplayerstats";
 import calculatedMatchupStatsService from "./services/calculatedmatchupstats";
-import booleanReducer, { setPlayerStats, setTeamStats, setLoadingLogout, setHelpDisplay } from "./reducers/booleanReducer";
+import booleanReducer, { setPlayerStats, setTeamStats, setLoadingLogout, setHelpDisplay, setUpcomingGamesStats } from "./reducers/booleanReducer";
 import dictReducer, { setPlayerStatsDictionary, setTeamStatsDictionary, setRatioDictionary, setLastGameStatsDictionary, setInjuredPlayersDictionary } from "./reducers/dictReducer";
 import nullReducer, { setUser, setSuccessMessage, setErrorMessage } from "./reducers/nullReducer";
 import stringReducer, { setPlayerName } from "./reducers/stringReducer";
@@ -78,6 +78,7 @@ function App() {
   const helpDisplay = useSelector((state) => state.booleanReducer.helpDisplay);
   const teamPoints = useSelector((state) => state.numberReducer.teamPoints);
   const oppTeamPoints = useSelector((state) => state.numberReducer.oppTeamPoints);
+  const upcomingGamesStats = useSelector((state) => state.booleanReducer.upcomingGamesStats)
 
   const dispatch = useDispatch(); /* State changer from Redux */
 
@@ -102,6 +103,7 @@ function App() {
 
   const titleDisplay = !helpDisplay && !loadingLogout && !playerStats && !teamStats;
   const mainPageDisplay = !helpDisplay && user && !playerStats && !teamStats;
+  const upcomingGamesStatsDisplay = !helpDisplay && user && !playerStats && !teamStats && upcomingGamesStats;
   const helpPageDisplay = helpDisplay && user && !playerStats && !teamStats;
   const statsPageDisplay = !helpDisplay && user && playerStats;
   const teamStatsPageDisplay = !helpDisplay && user && teamStats;
@@ -163,7 +165,7 @@ function App() {
   const goToUpcomingGames = () => {
     window.scrollTo(0, 0);
     dispatch(setSeed(Math.random()));
-    dispatch(setPlayerStats(true))
+    dispatch(setUpcomingGamesStats(false))
   };
 
   /* The following two functions get stats and populate them into the DOM */
@@ -325,7 +327,7 @@ function App() {
   return (
     <div className="main-container">
       <Router>
-        {mainPageDisplay && <nav className="topleft">
+        {upcomingGamesStatsDisplay && <nav className="topleft">
                               <Link 
                               to="/upcoming-games" 
                               onClick={goToUpcomingGames}>

@@ -41,7 +41,8 @@ const booleanSlice = createSlice({
         loadingLogout: false,
         swapInputsToPlayer: true,
         swapInputsToMatchup: false,
-        helpDisplay: false
+        helpDisplay: false,
+        upcomingGamesStats: true
     },
     reducers: {
         setPlayerStats(state, action) {
@@ -85,9 +86,15 @@ const booleanSlice = createSlice({
                 ...state,
                 helpDisplay: action.payload
             }
+        },
+        setUpcomingGamesStats(state, action) {
+            return {
+                ...state,
+                upcomingGamesStats: action.payload
+            }
         }
     }
 });
 
-export const { setPlayerStats, setTeamStats, setNoPlayersOrTeams, setLoadingLogout, setSwapInputsToPlayer, setSwapInputsToMatchup, setHelpDisplay } = booleanSlice.actions;
+export const { setPlayerStats, setTeamStats, setNoPlayersOrTeams, setLoadingLogout, setSwapInputsToPlayer, setSwapInputsToMatchup, setHelpDisplay, setUpcomingGamesStats } = booleanSlice.actions;
 export default booleanSlice.reducer;
