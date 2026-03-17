@@ -111,7 +111,7 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
 
     /* Function to navigate to home tab. */
     const navToHome = () => {
-      dispatch(setUpcomingGamesStats(false))
+      dispatch(setUpcomingGamesStats(true))
       navigate('/');
     };
 

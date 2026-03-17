@@ -108,7 +108,9 @@ const Help = () => {
         <p>
             Upon submitting either set of
             inputs, the corresponding stats
-            are displayed.
+            are displayed. The matchup stats 
+            are displayed in an HTML table, 
+            that you can scroll through.
         </p>
         <p>
             If you wish to see the stats of an 
