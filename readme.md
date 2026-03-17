@@ -110,14 +110,7 @@ For this app, you'll need:
 
 ### Installation
 
-1. Install a database client for PostgreSQL, then
-   install psql and use the following command:
-
-   ```sh
-   psql -U yourusername -d yourdatabasename -f /path/to/schemas.sql
-   ```
-
-2. Clone this repository:
+1. Clone this repository:
 
    ```sh
    git clone https://github.com/EramMKabir/nba-stats-app.git
@@ -126,6 +119,32 @@ For this app, you'll need:
 
    ```sh
    cd nba-stats-app
+   ```
+
+   Install git-lfs:
+
+   ```sh
+   brew install git-lfs
+   git lfs install
+   ```
+
+   Then fetch the .sql file using:
+
+   ```sh
+   git lfs fetch --include="/path/to/schemas.sql"
+   ```
+
+   And checkout the file:
+
+   ```sh
+   git lfs checkout
+   ```
+
+2. Install a database client for PostgreSQL, then
+   install psql and use the following command:
+
+   ```sh
+   psql -U yourusername -d yourdatabasename -f /path/to/schemas.sql
    ```
 
 3. Setup the backend:
@@ -140,7 +159,6 @@ For this app, you'll need:
 
    ```sh
    pip install -r requirements.txt
-   python main.py
    ```
 
    Compile the .pyx file:

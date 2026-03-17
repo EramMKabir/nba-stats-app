@@ -96,6 +96,17 @@ function App() {
 
   const { setToken } = useAuth(); /* Context variable for setting token */
 
+  /*
+  Conditional display variables for displaying components during different states  
+  */
+
+  const titleDisplay = !helpDisplay && !loadingLogout && !playerStats && !teamStats;
+  const mainPageDisplay = !helpDisplay && user && !playerStats && !teamStats;
+  const helpPageDisplay = helpDisplay && user && !playerStats && !teamStats;
+  const statsPageDisplay = !helpDisplay && user && playerStats;
+  const teamStatsPageDisplay = !helpDisplay && user && teamStats;
+  const OAuthDisplay = !helpDisplay && !user && !loadingLogout;
+
   /* 
   RemoveUser removes the user and sets all
   relevant states to default values 
@@ -152,6 +163,7 @@ function App() {
   const goToUpcomingGames = () => {
     window.scrollTo(0, 0);
     dispatch(setSeed(Math.random()));
+    dispatch(setPlayerStats(true))
   };
 
   /* The following two functions get stats and populate them into the DOM */
@@ -162,8 +174,8 @@ function App() {
                                              seasonType, 
                                              opposingTeam, 
                                              recentGames}, token);
-
     const timeoutDuration = 2000;
+    window.scrollTo(0, 0)
     if (typeof newDictionary === "object"){
       dispatch(setSuccessMessage("Data collected successfully!"));
       setTimeout(() => {
@@ -198,6 +210,7 @@ function App() {
                                                                                 opposingTeam,
                                                                                 recentGames}, token);
       const timeoutDuration = 2000;
+      window.scrollTo(0, 0)
       if (typeof newDictionary.matchup_stats === "object" && typeof newDictionary.ratio_stats === "object"){
         dispatch(setSuccessMessage("Data collected successfully!"));
         setTimeout(() => {
@@ -231,12 +244,6 @@ function App() {
   
   /* Entire app is described below */
   const Home = () => {
-    const titleDisplay = !helpDisplay && !loadingLogout && !playerStats && !teamStats;
-    const mainPageDisplay = !helpDisplay && user && !playerStats && !teamStats;
-    const helpPageDisplay = helpDisplay && user && !playerStats && !teamStats;
-    const statsPageDisplay = !helpDisplay && user && playerStats;
-    const teamStatsPageDisplay = !helpDisplay && user && teamStats;
-    const OAuthDisplay = !helpDisplay && !user && !loadingLogout;
     return (
       <div>
         {titleDisplay && <h1>
@@ -244,14 +251,6 @@ function App() {
                             NBA Projected Stat Calculator
                           </span>
                         </h1>}
-        
-        {mainPageDisplay && <nav>
-                              <Link className="topleft" 
-                              to="/upcoming-games" 
-                              onClick={goToUpcomingGames}>
-                                Upcoming Games
-                              </Link>
-                            </nav>}
         
         {mainPageDisplay && <Inputs 
                             getPlayerStats={getPlayerStats} 
@@ -324,12 +323,23 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route path='/' element = {<><Success message={successMessage} /><Error message={errorMessage} /><Home /></>}></Route>
-        <Route path="/upcoming-games" element={<NBATeamsAndPlayersStatsDisplay seed={seed} teamsArray={teamsArray} playersArray={playersArray} />}></Route>
-      </Routes>
-    </Router>
+    <div className="main-container">
+      <Router>
+        {mainPageDisplay && <nav className="topleft">
+                              <Link 
+                              to="/upcoming-games" 
+                              onClick={goToUpcomingGames}>
+                                Upcoming Games
+                              </Link>
+                            </nav>}
+        <Success message={successMessage} />
+        <Error message={errorMessage} />
+        <Routes>
+          <Route path='/' element = {<Home />}></Route>
+          <Route path="/upcoming-games" element={<NBATeamsAndPlayersStatsDisplay seed={seed} teamsArray={teamsArray} playersArray={playersArray} />}></Route>
+        </Routes>
+      </Router>
+    </div>
   );
 };
 
