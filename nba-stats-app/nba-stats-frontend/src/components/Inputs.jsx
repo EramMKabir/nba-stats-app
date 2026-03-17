@@ -328,7 +328,6 @@ const Inputs = ({ getPlayerStats, getMatchupStats }) => {
       opposingTeam.team_abbreviation,
       recentGames);
     resetPlayerInputs();
-    window.scrollTo(0, 0);
   };
 
   const getMatchupInputs = async (event) => {
@@ -353,7 +352,6 @@ const Inputs = ({ getPlayerStats, getMatchupStats }) => {
       opposingTeamM.team_abbreviation,
       recentGamesM);
     resetMatchupInputs();
-    window.scrollTo(0, 0);
   };
 
   /*
@@ -623,7 +621,7 @@ const Inputs = ({ getPlayerStats, getMatchupStats }) => {
       <Autocomplete
             disablePortal
             freeSolo
-            size={isDesktopOrLaptop ? "medium" : "small"}
+            size={autoCompleteSize}
             options={[]}
             inputValue={recentGames ? recentGames : ''}
             onInputChange={(event, newInputValue) => {
