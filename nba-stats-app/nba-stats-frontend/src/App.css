@@ -125,6 +125,7 @@
 
   .tableStats {
     width: 100%;
+    max-width: 60vw;
     overflow-x: auto;
     max-height: 60vh;
     overflow-y: auto;
