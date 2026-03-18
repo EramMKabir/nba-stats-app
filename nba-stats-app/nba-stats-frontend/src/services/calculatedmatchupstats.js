@@ -6,7 +6,7 @@ Function: To call the second matchup stats microservice in the backend.
 
 Inputs:
 
-credentials: An object containing user inputs for the second matchup stats microservice.
+parameters: An object containing user inputs for the second matchup stats microservice.
 
 token: The access token received from the OAuth exchange microservice.
 

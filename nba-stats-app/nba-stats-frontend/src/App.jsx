@@ -41,7 +41,7 @@ import RatioDictionaryDisplay from "./components/RatioDictionaryDisplay";
 import Help from "./components/Help";
 import calculatedPlayerStatsService from "./services/calculatedplayerstats";
 import calculatedMatchupStatsService from "./services/calculatedmatchupstats";
-import booleanReducer, { setPlayerStats, setTeamStats, setLoadingLogout, setHelpDisplay, setUpcomingGamesStats } from "./reducers/booleanReducer";
+import booleanReducer, { setPlayerStats, setTeamStats, setHelpDisplay, setUpcomingGamesStats } from "./reducers/booleanReducer";
 import dictReducer, { setPlayerStatsDictionary, setTeamStatsDictionary, setRatioDictionary, setLastGameStatsDictionary, setInjuredPlayersDictionary } from "./reducers/dictReducer";
 import nullReducer, { setUser, setSuccessMessage, setErrorMessage } from "./reducers/nullReducer";
 import stringReducer, { setPlayerName } from "./reducers/stringReducer";
@@ -115,7 +115,6 @@ function App() {
   */
 
   const removeUser = async () => {
-    dispatch(setLoadingLogout(true));
     setToken(null);
     dispatch(setUser(null));
     dispatch(setPlayerStats(false));
@@ -130,7 +129,6 @@ function App() {
     dispatch(setTeamPoints(0));
     dispatch(setOppTeamPoints(0));
     dispatch(setHelpDisplay(false));
-    dispatch(setLoadingLogout(false));
   };
 
   /* Remove Stat functions */
