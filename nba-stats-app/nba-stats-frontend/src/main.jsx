@@ -26,14 +26,11 @@ Space complexity: O(n)
 
 /* Libraries and Functions */
 
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import AppWrapper from "./App.jsx";
 
 /* This simply loads the entire website into the index.html file. */
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <AppWrapper />
-  </StrictMode>,
+  <AppWrapper />
 );

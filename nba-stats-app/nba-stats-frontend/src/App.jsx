@@ -45,13 +45,15 @@ import booleanReducer, { setPlayerStats, setTeamStats, setHelpDisplay, setUpcomi
 import dictReducer, { setPlayerStatsDictionary, setTeamStatsDictionary, setRatioDictionary, setLastGameStatsDictionary, setInjuredPlayersDictionary } from "./reducers/dictReducer";
 import nullReducer, { setUser, setSuccessMessage, setErrorMessage } from "./reducers/nullReducer";
 import stringReducer, { setPlayerName } from "./reducers/stringReducer";
-import arrayReducer, { setTeamsArray, setPlayersArray } from "./reducers/arrayReducer";
+import arrayReducer, { setTeamsArray, setPlayersArray, setPlayerNamesArray, setTeamAbbreviationsArray } from "./reducers/arrayReducer";
 import numberReducer, { setSeed, setTeamPoints, setOppTeamPoints } from "./reducers/numberReducer";
 import { AuthProvider } from "./context/authContext";
 import React, { useEffect } from "react";
 import { useAuth } from "./context/authContext";
 import playersStatsService from "./services/playerstats";
 import upcomingGameTeamsService from "./services/upcominggameteams";
+import playerNamesService from "./services/playernames";
+import teamAbbreviationsService from "./services/teamabbreviations";
 import "./App.css";
 
 function App() {
@@ -72,6 +74,8 @@ function App() {
   const loadingLogout = useSelector((state) => state.booleanReducer.loadingLogout);
   const teamsArray = useSelector((state) => state.arrayReducer.teamsArray);
   const playersArray = useSelector((state) => state.arrayReducer.playersArray);
+  const playerNamesArray = useSelector((state) => state.arrayReducer.playerNamesArray);
+  const teamAbbreviationsArray = useSelector((state) => state.arrayReducer.teamAbbreviationsArray);
   const token = useSelector((state) => state.nullReducer.token);
   const lastGameStatsDictionary = useSelector((state) => state.dictReducer.lastGameStatsDictionary);
   const injuredPlayersDictionary = useSelector((state) => state.dictReducer.injuredPlayersDictionary);
@@ -87,8 +91,12 @@ function App() {
     const setPlayersAndTeams = async () => {
       const teamsArr = await upcomingGameTeamsService.upcomingGameTeams(token);
       const playersArr = await playersStatsService.playerStats(token);
+      const playerNames = await playerNamesService.playerNames(token);
+      const teamAbbreviations = await teamAbbreviationsService.teamAbbreviations(token);
       dispatch(setTeamsArray(teamsArr));
       dispatch(setPlayersArray(playersArr));
+      dispatch(setPlayerNamesArray(playerNames));
+      dispatch(setTeamAbbreviationsArray(teamAbbreviations));
     };
     if (token){
       setPlayersAndTeams(); /* Run function to get teams and players (or lack thereof). */
@@ -101,9 +109,8 @@ function App() {
   Conditional display variables for displaying components during different states  
   */
 
-  const titleDisplay = !helpDisplay && !loadingLogout && !playerStats && !teamStats;
-  const mainPageDisplay = !helpDisplay && user && !playerStats && !teamStats;
-  const upcomingGamesStatsDisplay = !helpDisplay && user && !playerStats && !teamStats && upcomingGamesStats;
+  const titleDisplay = !helpDisplay && !loadingLogout && !playerStats && !teamStats && upcomingGamesStats;
+  const mainPageDisplay = !helpDisplay && user && !playerStats && !teamStats && upcomingGamesStats;
   const helpPageDisplay = helpDisplay && user && !playerStats && !teamStats;
   const statsPageDisplay = !helpDisplay && user && playerStats;
   const teamStatsPageDisplay = !helpDisplay && user && teamStats;
@@ -255,6 +262,8 @@ function App() {
         {mainPageDisplay && <Inputs 
                             getPlayerStats={getPlayerStats} 
                             getMatchupStats={getMatchupStats}
+                            playerNamesArray={playerNamesArray}
+                            teamAbbreviationsArray={teamAbbreviationsArray}
                             />}
         
         {mainPageDisplay && <React.Fragment>
@@ -325,7 +334,7 @@ function App() {
   return (
     <div className="main-container">
       <Router>
-        {upcomingGamesStatsDisplay && <nav className="topleft">
+        {mainPageDisplay && <nav className="topleft">
                               <Link 
                               to="/upcoming-games" 
                               onClick={goToUpcomingGames}>

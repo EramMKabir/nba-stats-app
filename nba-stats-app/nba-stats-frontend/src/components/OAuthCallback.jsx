@@ -68,6 +68,9 @@ export default function OAuthCallback() {
                 return;
             };
             const res = await performExchange();
+            if ("error" in res) {
+                return
+            }
             setToken(res.data.token);
             setUser(res.data.user);
             window.history.replaceState({}, document.title, window.location.pathname);

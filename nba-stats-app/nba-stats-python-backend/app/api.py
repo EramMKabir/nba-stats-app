@@ -495,10 +495,10 @@ async def oauth_login(request: Request):
 @app.post("/oauth/exchange")
 async def exchange_code(request: Request, data: OAuthRequest):
     key = f"oauth_state:{data.state}"
-    verifier = redis_client.get(key).decode("utf-8")
-
+    verifier = redis_client.get(key)
     if not verifier:
-        return {"error": "invalid_or_expired_state"}
+        return JSONResponse(content={"error": "invalid_or_expired_state"})
+    verifier = verifier.decode("utf-8")
     redis_client.delete(key)
 
     async with httpx.AsyncClient() as client:
