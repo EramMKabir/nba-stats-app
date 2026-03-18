@@ -37,7 +37,7 @@ import { useEffect } from "react";
 import playerNamesService from "../services/playernames";
 import teamAbbreviationsService from "../services/teamabbreviations";
 import { useAuth } from "../context/authContext";
-import { setPlayerFullName, setSeason, setSeasonType, setOpposingTeam, setRecentGames, setTeam, setSeasonM, setSeasonTypeM, setOpposingTeamM, setRecentGamesM, setPlayerFullNameInput, setSeasonInput, setSeasonTypeInput, setOpposingTeamInput, setTeamInput, setSeasonMInput, setSeasonTypeMInput, setOpposingTeamMInput, } from "../reducers/stringReducer";
+import { setPlayerFullName, setSeason, setSeasonType, setOpposingTeam, setRecentGames, setTeam, setSeasonM, setSeasonTypeM, setOpposingTeamM, setRecentGamesM, setPlayerFullNameInput, setSeasonInput, setSeasonTypeInput, setOpposingTeamInput, setTeamInput, setSeasonMInput, setSeasonTypeMInput, setOpposingTeamMInput } from "../reducers/stringReducer";
 import { setPlayerNamesArray, setTeamAbbreviationsArray } from "../reducers/arrayReducer";
 import { setSwapInputsToPlayer, setSwapInputsToMatchup } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
