@@ -259,7 +259,7 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
             <h2>{team.first_team_abbreviation}</h2>
             <table>
             <tbody>
-            <tr>
+            <tr key = {`${team.first_team_abbreviation}-${index}`}>
             <style> 
               {cssStyleString}
             </style>
@@ -269,7 +269,7 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
             </tr>
             {
               [...firstTeamPlayers].sort((player, secondPlayer) => secondPlayer.points - player.points).map((player, index) => (
-                <tr key = {player[1]}>
+                <tr key = {index}>
                 {orderedHeaders.map((header, index) => (
                     <td key = {header}>{player[mappedHeaders[header]]}</td>
                 ))}
@@ -289,7 +289,7 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
             </tr>
             {
               [...secondTeamPlayers].sort((player, secondPlayer) => secondPlayer.points - player.points).map((player, index) => (
-                <tr key = {player[1]}>
+                <tr key = {index}>
                 {orderedHeaders.map((header, index) => (
                     <td key = {header}>{player[mappedHeaders[header]]}</td>
                 ))}

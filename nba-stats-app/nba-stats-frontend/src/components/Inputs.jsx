@@ -33,19 +33,14 @@ Space complexity: O(n)
 
 /* Libraries and Functions */
 
-import { useEffect } from "react";
-import playerNamesService from "../services/playernames";
-import teamAbbreviationsService from "../services/teamabbreviations";
-import { useAuth } from "../context/authContext";
 import { setPlayerFullName, setSeason, setSeasonType, setOpposingTeam, setRecentGames, setTeam, setSeasonM, setSeasonTypeM, setOpposingTeamM, setRecentGamesM, setPlayerFullNameInput, setSeasonInput, setSeasonTypeInput, setOpposingTeamInput, setTeamInput, setSeasonMInput, setSeasonTypeMInput, setOpposingTeamMInput } from "../reducers/stringReducer";
-import { setPlayerNamesArray, setTeamAbbreviationsArray } from "../reducers/arrayReducer";
 import { setSwapInputsToPlayer, setSwapInputsToMatchup } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { useMediaQuery } from "react-responsive";
 
-const Inputs = ({ getPlayerStats, getMatchupStats }) => {
+const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbreviationsArray }) => {
 
   /*
   The state variables below are
@@ -95,8 +90,6 @@ const Inputs = ({ getPlayerStats, getMatchupStats }) => {
   const seasonInput = useSelector((state) => state.stringReducer.seasonInput);
   const seasonTypeInput = useSelector((state) => state.stringReducer.seasonTypeInput);
   const opposingTeamInput = useSelector((state) => state.stringReducer.opposingTeamInput);
-  const playerNamesArray = useSelector((state) => state.arrayReducer.playerNamesArray);
-  const teamAbbreviationsArray = useSelector((state) => state.arrayReducer.teamAbbreviationsArray);
   const swapInputsToPlayer = useSelector((state) => state.booleanReducer.swapInputsToPlayer);
   const swapInputsToMatchup = useSelector((state) => state.booleanReducer.swapInputsToMatchup);
   const team = useSelector((state) => state.stringReducer.team);
@@ -110,29 +103,6 @@ const Inputs = ({ getPlayerStats, getMatchupStats }) => {
   const opposingTeamMInput = useSelector((state) => state.stringReducer.opposingTeamMInput);
 
   const dispatch = useDispatch(); /* Used to change state */
-
-  const { token } = useAuth(); /* Used to get auth token */
-
-  /* 
-  useEffect is for setting all possible player names
-  and all possible team abbreviations, through the
-  microservices on the backend.
-
-  This can only be done once, and only if the user has
-  logged in and has a valid token. In exchange, the data
-  is stored in Redux for easy access throughout the app.
-  */
-
-  useEffect(() => {
-    const setPlayerNamesAndTeamAbbreviations = async () => {
-      const playerNames = await playerNamesService.playerNames(token);
-      const teamAbbreviations = await teamAbbreviationsService.teamAbbreviations(token);
-      dispatch(setPlayerNamesArray(playerNames));
-      dispatch(setTeamAbbreviationsArray(teamAbbreviations));
-    };
-    setPlayerNamesAndTeamAbbreviations();
-  }, []);
-
   /* 
   Used to determine device type. 
   Needed for adjusting size of inputs

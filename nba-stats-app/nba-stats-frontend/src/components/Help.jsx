@@ -126,7 +126,11 @@ const Help = () => {
             due to data being updated every 30
             minutes. It should be very rare,
             but I am letting you know in case
-            you experience it.
+            you experience it. Also, the players
+            and teams in the inputs are loaded once
+            in the app, so if you want an update,
+            log out and log back in to refresh the
+            data.
         </p>
         <p>
             Have fun using the site.
