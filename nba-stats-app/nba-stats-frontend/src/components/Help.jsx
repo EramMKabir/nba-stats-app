@@ -130,7 +130,8 @@ const Help = () => {
             and teams in the inputs are loaded once
             in the app, so if you want an update,
             log out and log back in to refresh the
-            data.
+            data. Same logic applies for information
+            in the Upcoming Games tab.
         </p>
         <p>
             Have fun using the site.
