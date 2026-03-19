@@ -114,9 +114,6 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                             firstTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[0]]).filter(([player, stats]) => !injuredPlayersDictionary[player])), 
                             secondTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[1]]).filter(([player, stats]) => !injuredPlayersDictionary[player]))};
 
-    const cssStyleString = "table { font-family: arial, sans-serif;border-collapse: collapse; width: 100%; } \
-                            td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; }";
-
     const orderedHeaders = ["MIN", 
                             "PTS", 
                             "FGM", 
@@ -263,9 +260,6 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     const mobileCalculatedStatsView = () => {
         return (
               <div className="tableStats">
-              <style>
-                {cssStyleString}
-              </style>
               <h1 className="header">{dictKeys[0]}</h1>
                 {orderedHeadersPlusFirstTeamStats.map((playerStats, index) => (
                   <React.Fragment key={playerStats[0]}>
@@ -316,9 +310,6 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
 
     const desktopCalculatedStatsView = () => {
         return (<div className="tableStats">
-                <style>
-                  {cssStyleString}
-                </style>
                 <h1 className="header">{dictKeys[0]}</h1>
                 <table className="table">
                   <tbody>
