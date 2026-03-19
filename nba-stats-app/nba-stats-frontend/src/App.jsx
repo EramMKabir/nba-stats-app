@@ -136,6 +136,7 @@ function App() {
     dispatch(setTeamPoints(0));
     dispatch(setOppTeamPoints(0));
     dispatch(setHelpDisplay(false));
+    window.scrollTo(0, 0)
   };
 
   /* Remove Stat functions */
@@ -145,6 +146,7 @@ function App() {
     const emptyDictionary = {};
     dispatch(setPlayerStatsDictionary(emptyDictionary));
     dispatch(setPlayerName(''));
+    window.scrollTo(0, 0);
   };
 
   const removeTeamStats = () => {
@@ -156,7 +158,13 @@ function App() {
     dispatch(setInjuredPlayersDictionary(emptyDictionary));
     dispatch(setTeamPoints(0));
     dispatch(setOppTeamPoints(0));
+    window.scrollTo(0, 0);
   };
+
+  const switchBetweenMainAndHelp = (value) => {
+    window.scrollTo(0, 0);
+    dispatch(setHelpDisplay(value));
+  }
 
   /* 
   The following function sets the screen
@@ -268,7 +276,7 @@ function App() {
         
         {mainPageDisplay && <React.Fragment>
                               <br />
-                                <button onClick={() => dispatch(setHelpDisplay(true))}>
+                                <button onClick={() => switchBetweenMainAndHelp(true)}>
                                   Help
                                 </button>
                               <br />
@@ -286,7 +294,7 @@ function App() {
         {helpPageDisplay && <Help />}
         
         {helpPageDisplay && <button 
-                            onClick={() => dispatch(setHelpDisplay(false))}>
+                            onClick={() => switchBetweenMainAndHelp(false)}>
                               Return to Inputs
                             </button>}
         

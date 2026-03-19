@@ -342,7 +342,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                           <tr key = {`lastGame-${player}`}>
                             <td key = {`lastGame-${player}`}>Stat Changes from Last Recent Game</td>
                             {statsFromLastGameForFirstTeam[index].map((statChange, statChangeIndex) => (
-                            <td key = {`${player}-${statChange}`} className={`${statChange.includes('+') 
+                            <td key = {`${player}-${statChange}-${statChangeIndex}`} className={`${statChange.includes('+') 
                                                                             ? "greenText" 
                                                                             : (statChange.includes('-') 
                                                                             ? "redText" 
@@ -377,7 +377,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                           <tr key = {`lastGame-${player}`}>
                             <td key = {`lastGame-${player}`}>Stat Changes from Last Recent Game</td>
                             {statsFromLastGameForSecondTeam[index].map((statChange, statChangeIndex) => (
-                            <td key = {`${player}-${statChange}`} className={`${statChange.includes('+') 
+                            <td key = {`${player}-${statChange}-${statChangeIndex}`} className={`${statChange.includes('+') 
                                                                             ? "greenText" 
                                                                             : (statChange.includes('-') 
                                                                             ? "redText" 
