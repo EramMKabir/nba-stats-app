@@ -561,8 +561,9 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
               typeof option === "object" && option !== null
               ? option.team_abbreviation
               : ''}
-            renderOption={(props, option) => (
+            renderOption={({ key, ...props }, option) => (
               <li
+                key={key}
                 {...props}
                 style={{
                   minHeight: option.team_abbreviation === '' ? 36 : undefined,

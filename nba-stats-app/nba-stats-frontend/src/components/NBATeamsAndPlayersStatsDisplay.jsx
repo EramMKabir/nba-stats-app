@@ -32,12 +32,11 @@ Space complexity: O(n*m)
 */
 
 /* Libraries and Functions */
-
 import { setNoPlayersOrTeams, setUpcomingGamesStats } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "react-responsive";
-import React from "react";
+import React, { useEffect } from "react";
 
 const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
 
@@ -109,28 +108,27 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
 
     const isDesktopOrLaptop = useMediaQuery({ minWidth: 601 });
 
-    /* Function to navigate to home tab. */
-    const navToHome = () => {
-      dispatch(setUpcomingGamesStats(true))
-      navigate('/');
-    };
-
     /* 
        If there are no teams or players, return an HTML 
        element stating no games were found, and include a Go Back HTML button,
        by changing the noPlayersOrTeams state variable.
     */
 
-    if (teamsArray.length === 0 || playersArray.length === 0){
-      dispatch(setNoPlayersOrTeams(true));
+    useEffect(() => {
+        if (teamsArray.length === 0 || playersArray.length === 0) {
+            dispatch(setNoPlayersOrTeams(true));
+        }
+    }, [teamsArray, playersArray]);
+
+    /* Function to navigate to home tab. */
+    const navToHome = () => {
+      dispatch(setUpcomingGamesStats(true))
+      window.scrollTo(0, 0)
+      navigate('/');
     };
         
     /* Return null if teamsArray has no data or playersArray has no data. */
 
-    /* CSS styles for the stats table */
-    const cssStyleString = "table { font-family: arial, sans-serif;border-collapse: collapse; width: 100%; } \
-                            td, th { border: 1px solid #dddddd; text-align: left; padding: 8px; }";
-    
     /* Ordered list of headers for the stats display */
     const orderedHeaders = ["TEAM", 
                             "PLAYER", 
@@ -210,9 +208,6 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
           const firstTeamPlayers = [...headersPlusPlayersArray].filter(player => player[0].slice(-3) === team.first_team_abbreviation);
           const secondTeamPlayers = [...headersPlusPlayersArray].filter(player => player[0].slice(-3) === team.second_team_abbreviation);
           return (<div key = {`${team.first_team_abbreviation}-${team.second_team_abbreviation}-${index}`}>
-            <style> 
-              {cssStyleString}
-            </style>
             <h2>{team.first_team_abbreviation} vs. {team.second_team_abbreviation}</h2>
             <h2>{team.first_team_abbreviation}</h2>
             {firstTeamPlayers.map((player, index) => (
@@ -260,9 +255,6 @@ const NBATeamsAndPlayersStatsDisplay = ({seed, teamsArray, playersArray}) => {
             <table>
             <tbody>
             <tr key = {`${team.first_team_abbreviation}-${index}`}>
-            <style> 
-              {cssStyleString}
-            </style>
             {orderedHeaders.map((header, index) => (
               <th key = {header}>{header}</th>
             ))}
