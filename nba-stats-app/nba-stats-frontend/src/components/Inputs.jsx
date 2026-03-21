@@ -110,82 +110,6 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   */
   const isDesktopOrLaptop = useMediaQuery({ minWidth: 601 });
 
-  /*
-  Dispatch functions for changing most state variables. 
-  */
-
-  const setPlayerFullNameFunction = (playerFullName) => {
-    dispatch(setPlayerFullName(playerFullName));
-  };
-
-  const setPlayerFullNameInputFunction = (playerFullNameInput) => {
-    dispatch(setPlayerFullNameInput(playerFullNameInput));
-  };
-
-  const setTeamFunction = (team) => {
-    dispatch(setTeam(team));
-  };
-  
-  const setTeamInputFunction = (teamInput) => {
-    dispatch(setTeamInput(teamInput));
-  };
-
-  const setSeasonFunction = (season) => {
-    dispatch(setSeason(season));
-  };
-
-  const setSeasonInputFunction = (seasonInput) => {
-    dispatch(setSeasonInput(seasonInput));
-  };
-
-  const setSeasonTypeFunction = (seasonType) => {
-    dispatch(setSeasonType(seasonType));
-  };
-
-  const setSeasonTypeInputFunction = (seasonTypeInput) => {
-    dispatch(setSeasonTypeInput(seasonTypeInput));
-  };
-
-  const setOpposingTeamFunction = (opposingTeam) => {
-    dispatch(setOpposingTeam(opposingTeam));
-  };
-
-  const setOpposingTeamInputFunction = (opposingTeamInput) => {
-    dispatch(setOpposingTeamInput(opposingTeamInput));
-  };
-
-  const setSeasonMFunction = (seasonM) => {
-    dispatch(setSeasonM(seasonM));
-  };
-
-  const setSeasonMInputFunction = (seasonMInput) => {
-    dispatch(setSeasonMInput(seasonMInput));
-  };
-
-  const setSeasonTypeMFunction = (seasonTypeM) => {
-    dispatch(setSeasonTypeM(seasonTypeM));
-  };
-
-  const setSeasonTypeMInputFunction = (seasonTypeMInput) => {
-    dispatch(setSeasonTypeMInput(seasonTypeMInput));
-  };
-
-  const setOpposingTeamMFunction = (opposingTeamM) => {
-    dispatch(setOpposingTeamM(opposingTeamM));
-  };
-
-  const setOpposingTeamMInputFunction = (opposingTeamMInput) => {
-    dispatch(setOpposingTeamMInput(opposingTeamMInput));
-  };
-
-  const setRecentGamesFunction = (recentGames) => {
-    dispatch(setRecentGames(recentGames));
-  };
-
-  const setRecentGamesMFunction = (recentGamesM) => {
-    dispatch(setRecentGamesM(recentGamesM));
-  };
-
   /* 
      Functions to swap
      inputs between player
@@ -195,27 +119,27 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   */
 
   const resetPlayerInputs = () => {
-    setPlayerFullNameFunction('');
-    setPlayerFullNameInputFunction('');
-    setSeasonFunction('');
-    setSeasonInputFunction('');
-    setSeasonTypeFunction('');
-    setSeasonTypeInputFunction('');
-    setOpposingTeamFunction('');
-    setOpposingTeamInputFunction('');
-    setRecentGamesFunction('');
+    dispatch(setPlayerFullName(''));
+    dispatch(setPlayerFullNameInput(''));
+    dispatch(setSeason(''));
+    dispatch(setSeasonInput(''));
+    dispatch(setSeasonType(''));
+    dispatch(setSeasonTypeInput(''));
+    dispatch(setOpposingTeam(''));
+    dispatch(setOpposingTeamInput(''));
+    dispatch(setRecentGames(''));
   };
 
   const resetMatchupInputs = () => {
-    setTeamFunction('');
-    setTeamInputFunction('');
-    setSeasonMFunction('');
-    setSeasonMInputFunction('');
-    setSeasonTypeMFunction('');
-    setSeasonTypeMInputFunction('');
-    setOpposingTeamMFunction('');
-    setOpposingTeamMInputFunction('');
-    setRecentGamesMFunction('');
+    dispatch(setTeam(''));
+    dispatch(setTeamInput(''));
+    dispatch(setSeasonM(''));
+    dispatch(setSeasonMInput(''));
+    dispatch(setSeasonTypeM(''));
+    dispatch(setSeasonTypeMInput(''));
+    dispatch(setOpposingTeamM(''));
+    dispatch(setOpposingTeamMInput(''));
+    dispatch(setRecentGamesM(''));
   };
 
   const setInputsToPlayer = () => {
@@ -285,15 +209,14 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
       return entry.team_abbreviation === opposingTeam.team_abbreviation;
     });
     if (!playerFullNameInPlayerNamesArray
-        || !years.includes(season) 
-        || !seasonTypes.includes(seasonType)
-        || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeam.team_abbreviation)))
-        {
-          resetPlayerInputs();
-          return;
-        };
-    await getPlayerStats(playerFullName.player_name, 
-      season, 
+      || !years.includes(season)
+      || !seasonTypes.includes(seasonType)
+      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeam.team_abbreviation))) {
+      resetPlayerInputs();
+      return;
+    };
+    await getPlayerStats(playerFullName.player_name,
+      season,
       seasonType,
       opposingTeam.team_abbreviation,
       recentGames);
@@ -309,13 +232,12 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
       return entry.team_abbreviation === opposingTeamM.team_abbreviation;
     });
     if (!teamInTeamAbbreviationsArray
-        || !years.includes(seasonM) 
-        || !seasonTypes.includes(seasonTypeM)
-        || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeamM.team_abbreviation)))
-        {
-          resetMatchupInputs();
-          return;
-        };
+      || !years.includes(seasonM)
+      || !seasonTypes.includes(seasonTypeM)
+      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeamM.team_abbreviation))) {
+      resetMatchupInputs();
+      return;
+    };
     await getMatchupStats(team.team_abbreviation,
       seasonM,
       seasonTypeM,
@@ -378,12 +300,12 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
 
   const sanitizeRecentGamesInput = (event) => {
     const recentGames = event.target.value.replace(/\D/g, '');
-    setRecentGamesFunction(recentGames);
+    dispatch(setRecentGames(recentGames));
   };
 
   const sanitizeRecentGamesInputM = (event) => {
     const recentGamesM = event.target.value.replace(/\D/g, '');
-    setRecentGamesMFunction(recentGamesM);
+    dispatch(setRecentGamesM(recentGamesM));
   };
 
   /*
@@ -391,7 +313,7 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   to allow for either matchup or singular team projections
   when calculating projections. 
   */
-  const emptyStringArray = [{team_abbreviation: ''}];
+  const emptyStringArray = [{ team_abbreviation: '' }];
   const finalTeamAbbreviations = [...emptyStringArray, ...teamAbbreviationsArray];
 
   /*
@@ -464,152 +386,152 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
 
   const playerNameComponent = () => {
     return (
-      <Autocomplete 
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={playerNamesArray}
-            getOptionLabel={(option) => 
-              typeof option === "object" && option !== null
-              ? option.player_name
-              : ''}
-            isOptionEqualToValue={(option, value) =>
-              option.player_name === value?.player_name
-            }
-            renderInput={(params) => <TextField {...params} label="Player Full Name" className="whiteAutoComplete" />} 
-            name="playerFullName"
-            title="Enter the name of the player you wish to calculate projected stats for."
-            className="whiteAutoComplete"
-            value={playerNamesArrayHasEntries ? playerFullName : null}
-            inputValue={playerFullNameInput}
-            onChange={(event, newValue) => dispatch(setPlayerFullName(newValue))}
-            onInputChange={(event, newInputValue) => dispatch(setPlayerFullNameInput(newInputValue))}
-            />
+      <Autocomplete
+        disablePortal
+        freeSolo
+        size={autoCompleteSize}
+        options={playerNamesArray}
+        getOptionLabel={(option) =>
+          typeof option === "object" && option !== null
+            ? option.player_name
+            : ''}
+        isOptionEqualToValue={(option, value) =>
+          option.player_name === value?.player_name
+        }
+        renderInput={(params) => <TextField {...params} label="Player Full Name" className="whiteAutoComplete" />}
+        name="playerFullName"
+        title="Enter the name of the player you wish to calculate projected stats for."
+        className="whiteAutoComplete"
+        value={playerNamesArrayHasEntries ? playerFullName : null}
+        inputValue={playerFullNameInput}
+        onChange={(event, newValue) => dispatch(setPlayerFullName(newValue))}
+        onInputChange={(event, newInputValue) => dispatch(setPlayerFullNameInput(newInputValue))}
+      />
     );
   };
 
   const teamComponent = () => {
     return (<Autocomplete
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={teamAbbreviationsArray}
-            getOptionLabel={(option) => 
-              typeof option === "object" && option !== null
-              ? option.team_abbreviation
-              : ''}
-            isOptionEqualToValue={(option, value) =>
-              option.team_abbreviation === value?.team_abbreviation
-            }
-            renderInput={(params) => <TextField {...params} label="Team" className="whiteAutoComplete"/>}
-            name="team"
-            title="Enter the team abbreviation you wish to calculate projected stats for."
-            className="whiteAutoComplete"
-            value={teamAbbreviationsArrayHasEntries ? team : null}
-            inputValue={teamInput}
-            onChange={(event, newValue) => dispatch(setTeam(newValue))}
-            onInputChange={(event, newInputValue) => dispatch(setTeamInput(newInputValue))}
-            />);
+      disablePortal
+      freeSolo
+      size={autoCompleteSize}
+      options={teamAbbreviationsArray}
+      getOptionLabel={(option) =>
+        typeof option === "object" && option !== null
+          ? option.team_abbreviation
+          : ''}
+      isOptionEqualToValue={(option, value) =>
+        option.team_abbreviation === value?.team_abbreviation
+      }
+      renderInput={(params) => <TextField {...params} label="Team" className="whiteAutoComplete" />}
+      name="team"
+      title="Enter the team abbreviation you wish to calculate projected stats for."
+      className="whiteAutoComplete"
+      value={teamAbbreviationsArrayHasEntries ? team : null}
+      inputValue={teamInput}
+      onChange={(event, newValue) => dispatch(setTeam(newValue))}
+      onInputChange={(event, newInputValue) => dispatch(setTeamInput(newInputValue))}
+    />);
   };
 
-  const seasonYearComponent = (season, seasonInput, {setSeason, setSeasonInput}) => {
+  const seasonYearComponent = (season, seasonInput, { setSeason, setSeasonInput }) => {
     return (
       <Autocomplete
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={years}
-            renderInput={(params) => <TextField {...params} label="Season Year" className="whiteAutoComplete" />}
-            name="season"
-            title="Enter the season year you wish to calculate projected stats for."
-            className="whiteAutoComplete"
-            value={season}
-            inputValue={seasonInput}
-            onChange={(event, newValue) => setSeason(newValue)}
-            onInputChange={(event, newInputValue) => setSeasonInput(newInputValue)}
-            />
+        disablePortal
+        freeSolo
+        size={autoCompleteSize}
+        options={years}
+        renderInput={(params) => <TextField {...params} label="Season Year" className="whiteAutoComplete" />}
+        name="season"
+        title="Enter the season year you wish to calculate projected stats for."
+        className="whiteAutoComplete"
+        value={season}
+        inputValue={seasonInput}
+        onChange={(event, newValue) => setSeason(newValue)}
+        onInputChange={(event, newInputValue) => setSeasonInput(newInputValue)}
+      />
     );
   };
 
-  const seasonTypeComponent = (seasonType, seasonTypeInput, {setSeasonType, setSeasonTypeInput}) => {
+  const seasonTypeComponent = (seasonType, seasonTypeInput, { setSeasonType, setSeasonTypeInput }) => {
     return (
       <Autocomplete
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={seasonTypes}
-            renderInput={(params) => <TextField {...params} label="Season Type" className="whiteAutoComplete"/>}
-            name="seasonType" 
-            title="Enter the season type you wish to calculate projected stats for." 
-            className="whiteAutoComplete" 
-            value={seasonType} 
-            inputValue={seasonTypeInput}
-            onChange={(event, newValue) => setSeasonType(newValue)}
-            onInputChange={(event, newInputValue) => setSeasonTypeInput(newInputValue)}
-            />
+        disablePortal
+        freeSolo
+        size={autoCompleteSize}
+        options={seasonTypes}
+        renderInput={(params) => <TextField {...params} label="Season Type" className="whiteAutoComplete" />}
+        name="seasonType"
+        title="Enter the season type you wish to calculate projected stats for."
+        className="whiteAutoComplete"
+        value={seasonType}
+        inputValue={seasonTypeInput}
+        onChange={(event, newValue) => setSeasonType(newValue)}
+        onInputChange={(event, newInputValue) => setSeasonTypeInput(newInputValue)}
+      />
     );
   };
 
-  const opposingTeamComponent = (opposingTeam, opposingTeamInput, {setOpposingTeam, setOpposingTeamInput}) => {
+  const opposingTeamComponent = (opposingTeam, opposingTeamInput, { setOpposingTeam, setOpposingTeamInput }) => {
     return (
       <Autocomplete
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={finalTeamAbbreviations}
-            getOptionLabel={(option) => 
-              typeof option === "object" && option !== null
-              ? option.team_abbreviation
-              : ''}
-            renderOption={({ key, ...props }, option) => (
-              <li
-                key={key}
-                {...props}
-                style={{
-                  minHeight: option.team_abbreviation === '' ? 36 : undefined,
-                }}
-              >
-                {option.team_abbreviation}
-              </li>
-            )}
-            isOptionEqualToValue={(option, value) =>
-              option.team_abbreviation === value?.team_abbreviation
-            }
-            renderInput={(params) => <TextField {...params} label="Opposing Team" className="whiteAutoComplete"/>}
-            name="opposingTeam"
-            title="Enter the opposing team abbreviation you wish to calculate projected stats against."
-            className="whiteAutoComplete"
-            value={teamAbbreviationsArrayHasEntries ? opposingTeam : null}
-            inputValue={opposingTeamInput}
-            onChange={(event, newValue) => setOpposingTeam(newValue)}
-            onInputChange={(event, newInputValue) => setOpposingTeamInput(newInputValue)}
-            />
-    );
-  };
-
-  const recentGamesComponent = (recentGames, {sanitizeRecentGamesInput}) => {
-    return (
-      <Autocomplete
-            disablePortal
-            freeSolo
-            size={autoCompleteSize}
-            options={[]}
-            inputValue={recentGames ? recentGames : ''}
-            onInputChange={(event, newInputValue) => {
-              sanitizeRecentGamesInput({
-                target: { value: newInputValue }
-              })
+        disablePortal
+        freeSolo
+        size={autoCompleteSize}
+        options={finalTeamAbbreviations}
+        getOptionLabel={(option) =>
+          typeof option === "object" && option !== null
+            ? option.team_abbreviation
+            : ''}
+        renderOption={({ key, ...props }, option) => (
+          <li
+            key={key}
+            {...props}
+            style={{
+              minHeight: option.team_abbreviation === '' ? 36 : undefined,
             }}
-            renderInput={(params) => 
-            <TextField {...params} 
-            label="Recent Games" 
-            type="number" 
-            className="whiteAutoComplete" 
-            title="Enter the number of recent games to consider for projections." 
-            name="recentGames" 
+          >
+            {option.team_abbreviation}
+          </li>
+        )}
+        isOptionEqualToValue={(option, value) =>
+          option.team_abbreviation === value?.team_abbreviation
+        }
+        renderInput={(params) => <TextField {...params} label="Opposing Team" className="whiteAutoComplete" />}
+        name="opposingTeam"
+        title="Enter the opposing team abbreviation you wish to calculate projected stats against."
+        className="whiteAutoComplete"
+        value={teamAbbreviationsArrayHasEntries ? opposingTeam : null}
+        inputValue={opposingTeamInput}
+        onChange={(event, newValue) => setOpposingTeam(newValue)}
+        onInputChange={(event, newInputValue) => setOpposingTeamInput(newInputValue)}
+      />
+    );
+  };
+
+  const recentGamesComponent = (recentGames, { sanitizeRecentGamesInput }) => {
+    return (
+      <Autocomplete
+        disablePortal
+        freeSolo
+        size={autoCompleteSize}
+        options={[]}
+        inputValue={recentGames ? recentGames : ''}
+        onInputChange={(event, newInputValue) => {
+          sanitizeRecentGamesInput({
+            target: { value: newInputValue }
+          })
+        }}
+        renderInput={(params) =>
+          <TextField {...params}
+            label="Recent Games"
+            type="number"
+            className="whiteAutoComplete"
+            title="Enter the number of recent games to consider for projections."
+            name="recentGames"
             onKeyDown={handleNonNumberKeys}
-            onPaste={handleNonNumberPastes}/>}
-            />
+            onPaste={handleNonNumberPastes} />}
+      />
     );
   };
   /*
@@ -620,47 +542,47 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   return (
     <div>
       <h2><span className="NBAInputsStatSpan">Find NBA Projected Stats</span></h2>
-        {!swapInputsToPlayer && <button title="Click this to enter inputs for calculating stats of a player." onClick={setInputsToPlayer}>Switch to Player Projections</button>}
-        {!swapInputsToMatchup && <button title="Click this to enter inputs for calculating stats of a team." onClick={setInputsToMatchup}>Switch to Matchup Projections</button>}
-        <br />
-        <br />
-        {swapInputsToPlayer && 
-        <form key="playerForm" onSubmit={getPlayerInputs}> 
-            {playerNameComponent()}
-            <br />
-            <br />
-            {seasonYearComponent(season, seasonInput, {setSeason: setSeasonFunction, setSeasonInput: setSeasonInputFunction})}
-            <br />
-            <br />
-            {seasonTypeComponent(seasonType, seasonTypeInput, {setSeasonType: setSeasonTypeFunction, setSeasonTypeInput: setSeasonTypeInputFunction})}
-            <br />
-            <br />
-            {opposingTeamComponent(opposingTeam, opposingTeamInput, {setOpposingTeam: setOpposingTeamFunction, setOpposingTeamInput: setOpposingTeamInputFunction})}
-            <br />
-            <br />
-            {recentGamesComponent(recentGames, {sanitizeRecentGamesInput})}
-            <br />
-            <br />
-            <button type="submit">Submit</button>
+      {!swapInputsToPlayer && <button title="Click this to enter inputs for calculating stats of a player." onClick={setInputsToPlayer}>Switch to Player Projections</button>}
+      {!swapInputsToMatchup && <button title="Click this to enter inputs for calculating stats of a team." onClick={setInputsToMatchup}>Switch to Matchup Projections</button>}
+      <br />
+      <br />
+      {swapInputsToPlayer &&
+        <form key="playerForm" onSubmit={getPlayerInputs}>
+          {playerNameComponent()}
+          <br />
+          <br />
+          {seasonYearComponent(season, seasonInput, { setSeason: (v) => dispatch(setSeason(v)), setSeasonInput: (v) => dispatch(setSeasonInput(v)) })}
+          <br />
+          <br />
+          {seasonTypeComponent(seasonType, seasonTypeInput, { setSeasonType: (v) => dispatch(setSeasonType(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeInput(v)) })}
+          <br />
+          <br />
+          {opposingTeamComponent(opposingTeam, opposingTeamInput, { setOpposingTeam: (v) => dispatch(setOpposingTeam(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamInput(v)) })}
+          <br />
+          <br />
+          {recentGamesComponent(recentGames, { sanitizeRecentGamesInput })}
+          <br />
+          <br />
+          <button type="submit">Submit</button>
         </form>}
-        {swapInputsToMatchup && 
-        <form key="matchupForm" onSubmit={getMatchupInputs}> 
-            {teamComponent()}
-            <br />
-            <br />
-            {seasonYearComponent(seasonM, seasonMInput, {setSeason: setSeasonMFunction, setSeasonInput: setSeasonMInputFunction})}
-            <br />
-            <br />
-            {seasonTypeComponent(seasonTypeM, seasonTypeMInput, {setSeasonType: setSeasonTypeMFunction, setSeasonTypeInput: setSeasonTypeMInputFunction})}
-            <br />
-            <br />
-            {opposingTeamComponent(opposingTeamM, opposingTeamMInput, {setOpposingTeam: setOpposingTeamMFunction, setOpposingTeamInput: setOpposingTeamMInputFunction})}
-            <br />
-            <br />
-            {recentGamesComponent(recentGamesM, {sanitizeRecentGamesInput: sanitizeRecentGamesInputM})}
-            <br />
-            <br />
-            <button type="submit">Submit</button>
+      {swapInputsToMatchup &&
+        <form key="matchupForm" onSubmit={getMatchupInputs}>
+          {teamComponent()}
+          <br />
+          <br />
+          {seasonYearComponent(seasonM, seasonMInput, { setSeason: (v) => dispatch(setSeasonM(v)), setSeasonInput: (v) => dispatch(setSeasonMInput(v)) })}
+          <br />
+          <br />
+          {seasonTypeComponent(seasonTypeM, seasonTypeMInput, { setSeasonType: (v) => dispatch(setSeasonTypeM(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeMInput(v)) })}
+          <br />
+          <br />
+          {opposingTeamComponent(opposingTeamM, opposingTeamMInput, { setOpposingTeam: (v) => dispatch(setOpposingTeamM(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamMInput(v)) })}
+          <br />
+          <br />
+          {recentGamesComponent(recentGamesM, { sanitizeRecentGamesInput: sanitizeRecentGamesInputM })}
+          <br />
+          <br />
+          <button type="submit">Submit</button>
         </form>}
     </div>
   );

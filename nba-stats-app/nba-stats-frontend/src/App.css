@@ -1,17 +1,17 @@
 @media screen and (max-width: 600px) {
   #root {
-  margin: 0 auto;
-  padding: 1rem;
-  width: 100%;
-  max-width: 100%;
-  text-align: center;
-  display: flex;
-  flex-wrap: wrap;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  --text-primary: #111111;
-  --border-color: #111111;
+    margin: 0 auto;
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    --text-primary: #111111;
+    --border-color: #111111;
   }
 
   [data-theme="dark"] {
@@ -39,14 +39,20 @@
     width: 100%;
   }
 
-  .NBAInputFullName, .NBAInputTeam, .NBAInputSeason, .NBAInputSeasonType, .NBAInputOpposingTeam, .NBAInputRecentGames {
+  .NBAInputFullName,
+  .NBAInputTeam,
+  .NBAInputSeason,
+  .NBAInputSeasonType,
+  .NBAInputOpposingTeam,
+  .NBAInputRecentGames {
     font-size: 16px;
   }
 
-  td, th {
+  td,
+  th {
     display: block;
-    border: 1px solid #dddddd; 
-    text-align: left; 
+    border: 1px solid #dddddd;
+    text-align: left;
     padding: 8px;
   }
 
@@ -63,7 +69,8 @@
     color: red;
   }
 
-  .whiteAutoComplete, .whiteAutoComplete * {
+  .whiteAutoComplete,
+  .whiteAutoComplete * {
     font-size: 16px;
     color: var(--text-primary);
     border-color: var(--border-color);
@@ -86,7 +93,7 @@
   }
 
   .basketball-background {
-    background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./images/nba-stats-app-logo.png');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./images/nba-stats-app-logo.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -109,8 +116,8 @@
     display: flex;
     flex-wrap: wrap;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: flex-start;
     --text-primary: #111111;
     --border-color: #111111;
   }
@@ -141,9 +148,10 @@
     width: 100%;
   }
 
-  td, th {
-    border: 1px solid #dddddd; 
-    text-align: left; 
+  td,
+  th {
+    border: 1px solid #dddddd;
+    text-align: left;
     padding: 8px;
   }
 
@@ -160,7 +168,8 @@
     color: red;
   }
 
-  .whiteAutoComplete, .whiteAutoComplete * {
+  .whiteAutoComplete,
+  .whiteAutoComplete * {
     color: var(--text-primary);
     border-color: var(--border-color);
   }
@@ -181,8 +190,17 @@
     border-color: var(--border-color);
   }
 
+  .home-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: calc(100vh - 4rem);
+  }
+
   .basketball-background {
-    background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('./images/nba-stats-app-logo.png');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./images/nba-stats-app-logo.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
