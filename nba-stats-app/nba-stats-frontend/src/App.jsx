@@ -260,7 +260,7 @@ function App() {
   /* Entire app is described below */
   const Home = () => {
     return (
-      <div>
+      <div className="home-content">
         {titleDisplay && <h1>
                           <span>
                             NBA Projected Stat Calculator
@@ -279,7 +279,6 @@ function App() {
                                 <button onClick={() => switchBetweenMainAndHelp(true)}>
                                   Help
                                 </button>
-                              <br />
                             </React.Fragment>}
         
         {mainPageDisplay && <React.Fragment>
