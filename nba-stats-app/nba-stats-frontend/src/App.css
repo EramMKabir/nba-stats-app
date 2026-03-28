@@ -92,6 +92,15 @@
     border-color: var(--border-color);
   }
 
+  .home-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: calc(100vh - 4rem);
+  }
+
   .basketball-background {
     background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./images/nba-stats-app-logo.png');
     background-size: cover;
