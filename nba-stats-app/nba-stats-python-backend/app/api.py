@@ -898,7 +898,7 @@ async def get_wl_ratio_for_matchup(params: Annotated[matchupCalculatorParams, Qu
 
 async def get_last_game_stats(params: Annotated[matchupCalculatorParams, Query()]):
 
-    table_names_hm = {"Pre Season": "preseason", "Regular Season": "regseason", "All Star": "astars", "Playoffs": "poffs"}
+    table_names_hm = {"Pre Season": "preseason", "Regular Season": "regseason", "All Star": "astars", "Playoffs": "poffsseason"}
 
     async with nba_pool.acquire() as cur:
         
