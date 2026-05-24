@@ -343,7 +343,7 @@ def get_current_user(authorization: str = Header(None)):
 # an NBA team scores in a matchup
 # based on historical data
 
-def use_model(features_array: list[Union[int, float]], params: Annotated[matchupCalculatorParams, Query()]) -> Union[int, float]:
+def use_model(features_array: list[Union[int, float]], params: Annotated[matchupCalculatorParams, Query()], player_count: int) -> Union[int, float]:
 
     necessary_stat_indices = {1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 15, 16, 17}
 
@@ -382,8 +382,6 @@ def use_model(features_array: list[Union[int, float]], params: Annotated[matchup
     ml_regression_features.append(fta_rate)
     ml_regression_features.append(ast_rate)
 
-    ml_regression_features = [ml_regression_features]
-
     if params.seasonType == "Regular Season":
 
         ml_regression_model = reg_model
@@ -396,7 +394,28 @@ def use_model(features_array: list[Union[int, float]], params: Annotated[matchup
 
         ml_regression_model = pre_model
 
-    predicted_team_points = ml_regression_model.predict(ml_regression_features)
+        total_minutes = features_array[0]
+        total_player_points = features_array[18]
+        total_player_plus_minus = features_array[19]
+
+        player_points_per_minute = (
+            nba_stat_calculator_p.round_to_two_decimal_places(total_player_points / total_minutes)
+            if total_minutes else 0
+        )
+
+        player_plus_minus_per_minute = (
+            nba_stat_calculator_p.round_to_two_decimal_places(total_player_plus_minus / total_minutes)
+            if total_minutes else 0
+        )
+
+        ml_regression_features.append(player_count)
+        ml_regression_features.append(total_minutes)
+        ml_regression_features.append(total_player_points)
+        ml_regression_features.append(total_player_plus_minus)
+        ml_regression_features.append(player_points_per_minute)
+        ml_regression_features.append(player_plus_minus_per_minute)
+
+    predicted_team_points = ml_regression_model.predict([ml_regression_features])
 
     return predicted_team_points[0]
 
@@ -773,13 +792,17 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
 
         np_opp_player_stats_list = np_opp_player_stats_list[indices_of_relevant_opp_players]
 
+        num_players = len(np_player_stats_list)
+
+        num_opp_players = len(np_opp_player_stats_list)
+
         np_player_stats_list = np.nansum(np_player_stats_list, axis=0)
 
         np_opp_player_stats_list = np.nansum(np_opp_player_stats_list, axis=0)
         
-        team_pts = use_model(np_player_stats_list, params)
+        team_pts = use_model(np_player_stats_list, params, num_players)
 
-        opp_team_pts = use_model(np_opp_player_stats_list, params)
+        opp_team_pts = use_model(np_opp_player_stats_list, params, num_opp_players)
 
         num_stats = 20
 
