@@ -42,7 +42,6 @@
   .tableStats h1.header {
     position: sticky;
     left: 0;
-    background-color: var(--fixed-color);
     margin: 0;
     z-index: 10;
   }
@@ -67,7 +66,6 @@
     position: sticky;
     left: 0;
     z-index: 10;
-    background-color: var(--fixed-color);
   }
 
   table {
