@@ -115,7 +115,6 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                             secondTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[1]]).filter(([player, stats]) => !injuredPlayersDictionary[player]))};
 
     const orderedHeaders = ["MIN", 
-                            "PTS", 
                             "FGM", 
                             "FGA", 
                             "FG_PCT", 
@@ -129,15 +128,15 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                             "DREB", 
                             "REB", 
                             "AST", 
-                            "TOV", 
                             "STL", 
                             "BLK", 
+                            "TOV", 
                             "PF", 
+                            "PTS", 
                             "PLUS_MINUS"];
     
     const statNameToDisplayName = {
         "MIN": "minutes", 
-        "PTS": "points", 
         "FGM": "field_goals_made", 
         "FGA": "field_goals_attempted", 
         "FG_PCT": "field_goals_percentage", 
@@ -151,10 +150,11 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
         "DREB": "defensive_rebounds", 
         "REB": "rebounds", 
         "AST": "assists", 
-        "TOV": "turnovers", 
         "STL": "steals", 
         "BLK": "blocks", 
+        "TOV": "turnovers", 
         "PF": "personal_fouls", 
+        "PTS": "points", 
         "PLUS_MINUS": "plus_minus"
     };
     
@@ -260,50 +260,50 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     const mobileCalculatedStatsView = () => {
         return (
               <div className="tableStats">
-              <h1 className="header">{dictKeys[0]}</h1>
-                {orderedHeadersPlusFirstTeamStats.map((playerStats, index) => (
-                  <React.Fragment key={playerStats[0]}>
-                    <table className="table">
-                      <tbody>
-                      {playerStats.map((stat, statIndex) => (
-                        <tr key={`${playerStats[0]}-${stat}`}>
-                          <th className={`${stat.includes('+') && 
-                                            (stat.includes('%') || stat.includes("Absolute Change")) 
-                                            ? "greenText" 
-                                            : (stat.includes('-') && 
-                                            (stat.includes('%') || stat.includes("Absolute Change")) 
-                                            ? "redText" 
-                                            : '')}`}>{stat}</th>
+                <h1 className="header">{dictKeys[0]}</h1>
+                <div className="table-wrapper">
+                  <table className="table">
+                  <tbody>
+                  {orderedHeadersPlusFirstTeamStats.map((playerStats, index) => (
+                    <React.Fragment key={playerStats[0]}>
+                        <tr key={index}>
+                        {playerStats.map((stat, statIndex) => (
+                            <td key={statIndex} className={`${stat.includes('+') && 
+                                              (stat.includes('%') || stat.includes("Absolute Change")) 
+                                              ? "greenText" 
+                                              : (stat.includes('-') && 
+                                              (stat.includes('%') || stat.includes("Absolute Change")) 
+                                              ? "redText" 
+                                              : '')}`}>{stat}</td>
+                        ))}
                         </tr>
-                      ))}
-                      </tbody>
-                    </table>
-                    <br/>
-                    <br/>
-                  </React.Fragment>
-                ))}
-              <h1 className="header">{dictKeys[1]}</h1>
-                {orderedHeadersPlusSecondTeamStats.map((playerStats, index) => (
-                  <React.Fragment key={playerStats[0]}>
-                    <table className="table">
-                      <tbody>
-                      {playerStats.map((stat, statIndex) => (
-                        <tr key={`${playerStats[0]}-${stat}`}>
-                          <th className={`${stat.includes('+') && 
-                                            (stat.includes('%') || stat.includes("Absolute Change")) 
-                                            ? "greenText" 
-                                            : (stat.includes('-') && 
-                                            (stat.includes('%') || stat.includes("Absolute Change")) 
-                                            ? "redText" 
-                                            : '')}`}>{stat}</th>
+                    </React.Fragment>
+                  ))}
+                  </tbody>
+                  </table>
+                </div>
+                <h1 className="header">{dictKeys[1]}</h1>
+                <div className="table-wrapper">
+                  <table className="table">
+                  <tbody>
+                  {orderedHeadersPlusSecondTeamStats.map((playerStats, index) => (
+                    <React.Fragment key={playerStats[0]}>
+                        <tr key={index}>
+                        {playerStats.map((stat, statIndex) => (
+                            <td key={statIndex} className={`${stat.includes('+') && 
+                                              (stat.includes('%') || stat.includes("Absolute Change")) 
+                                              ? "greenText" 
+                                              : (stat.includes('-') && 
+                                              (stat.includes('%') || stat.includes("Absolute Change")) 
+                                              ? "redText" 
+                                              : '')}`}>{stat}</td>
+                        ))}
                         </tr>
-                      ))}
-                      </tbody>
-                    </table>
-                    <br/>
-                    <br/>
-                  </React.Fragment>
-                ))}
+                    </React.Fragment>
+                  ))}
+                  </tbody>
+                  </table>
+                </div>
             </div> 
         );
     };

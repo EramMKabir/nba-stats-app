@@ -12,25 +12,62 @@
     align-items: center;
     --text-primary: #111111;
     --border-color: #111111;
+    --fixed-color: #ffffff;
   }
 
   [data-theme="dark"] {
     --text-primary: #ffffff;
     --border-color: #ffffff;
+    --fixed-color: #111111;
   }
 
   @media (prefers-color-scheme: dark) {
     #root {
       --text-primary: #ffffff;
       --border-color: #ffffff;
+      --fixed-color: #111111;
     }
   }
 
   .tableStats {
+    display: block;
     width: 100%;
-    overflow-x: auto;
     max-height: 60vh;
     overflow-y: auto;
+    max-width: 100vh;
+    overflow-x: visible;
+    position: relative;
+  }
+
+  .tableStats h1.header {
+    position: sticky;
+    left: 0;
+    background-color: var(--fixed-color);
+    margin: 0;
+    z-index: 10;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .table.table {
+    display: table;
+    overflow-x: visible;
+    position: relative;
+    width: max-content;
+    white-space: nowrap;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table.table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: var(--fixed-color);
   }
 
   table {
@@ -50,10 +87,10 @@
 
   td,
   th {
-    display: block;
     border: 1px solid #dddddd;
     text-align: left;
     padding: 8px;
+    white-space: nowrap;
   }
 
   .topleft {
@@ -99,18 +136,6 @@
     justify-content: center;
     width: 100%;
     min-height: calc(100vh - 4rem);
-  }
-
-  .basketball-background {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./images/nba-stats-app-logo.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    min-width: fit-content;
   }
 
 }
@@ -207,17 +232,4 @@
     width: 100%;
     min-height: calc(100vh - 4rem);
   }
-
-  .basketball-background {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./images/nba-stats-app-logo.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    min-height: 100vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    min-width: fit-content;
-  }
-
 }
