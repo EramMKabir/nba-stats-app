@@ -394,26 +394,26 @@ def use_model(features_array: list[Union[int, float]], params: Annotated[matchup
 
         ml_regression_model = pre_model
 
-        total_minutes = features_array[0]
-        total_player_points = features_array[18]
-        total_player_plus_minus = features_array[19]
+    total_minutes = features_array[0]
+    total_player_points = features_array[18]
+    total_player_plus_minus = features_array[19]
 
-        player_points_per_minute = (
-            nba_stat_calculator_p.round_to_two_decimal_places(total_player_points / total_minutes)
-            if total_minutes else 0
-        )
+    player_points_per_minute = (
+        nba_stat_calculator_p.round_to_two_decimal_places(total_player_points / total_minutes)
+        if total_minutes else 0
+    )
 
-        player_plus_minus_per_minute = (
-            nba_stat_calculator_p.round_to_two_decimal_places(total_player_plus_minus / total_minutes)
-            if total_minutes else 0
-        )
+    player_plus_minus_per_minute = (
+        nba_stat_calculator_p.round_to_two_decimal_places(total_player_plus_minus / total_minutes)
+        if total_minutes else 0
+    )
 
-        ml_regression_features.append(player_count)
-        ml_regression_features.append(total_minutes)
-        ml_regression_features.append(total_player_points)
-        ml_regression_features.append(total_player_plus_minus)
-        ml_regression_features.append(player_points_per_minute)
-        ml_regression_features.append(player_plus_minus_per_minute)
+    ml_regression_features.append(player_count)
+    ml_regression_features.append(total_minutes)
+    ml_regression_features.append(total_player_points)
+    ml_regression_features.append(total_player_plus_minus)
+    ml_regression_features.append(player_points_per_minute)
+    ml_regression_features.append(player_plus_minus_per_minute)
 
     predicted_team_points = ml_regression_model.predict([ml_regression_features])
 
