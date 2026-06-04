@@ -789,7 +789,7 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         indices_of_relevant_opp_players = [i for i in range(len(opp_player_names_)) 
                                            if opp_player_names_[i] in players_from_last_game]
 
-        num_players_to_keep = random.randint(8, 10)
+        num_players_to_keep = 9
 
         if not indices_of_relevant_players:
 
