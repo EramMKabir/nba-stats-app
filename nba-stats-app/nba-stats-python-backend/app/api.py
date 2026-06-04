@@ -70,6 +70,7 @@ import httpx
 import numpy as np
 import xgboost as xgb
 import threading
+import random
 
 # One pool of connections will be used to connect to 1 database. The
 # database to connect to is a PostgreSQL database (through nba_pool).
@@ -788,6 +789,16 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         indices_of_relevant_opp_players = [i for i in range(len(opp_player_names_)) 
                                            if opp_player_names_[i] in players_from_last_game]
 
+        num_players_to_keep = random.randint(8, 10)
+
+        if not indices_of_relevant_players:
+
+            indices_of_relevant_players = np.argsort(np_player_stats_list[:, -2])[::-1][:num_players_to_keep]
+
+        if not indices_of_relevant_opp_players:
+
+            indices_of_relevant_opp_players = np.argsort(np_opp_player_stats_list[:, -2])[::-1][:num_players_to_keep]
+
         np_player_stats_list = np_player_stats_list[indices_of_relevant_players]
 
         np_opp_player_stats_list = np_opp_player_stats_list[indices_of_relevant_opp_players]
@@ -799,7 +810,7 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         np_player_stats_list = np.nansum(np_player_stats_list, axis=0)
 
         np_opp_player_stats_list = np.nansum(np_opp_player_stats_list, axis=0)
-        
+
         team_pts = use_model(np_player_stats_list, params, num_players)
 
         opp_team_pts = use_model(np_opp_player_stats_list, params, num_opp_players)
@@ -928,7 +939,7 @@ async def get_last_game_stats(params: Annotated[matchupCalculatorParams, Query()
         last_game_query_string = query_last_game_string(table_names_hm[params.seasonType])
 
         last_game_players_stats = await cur.fetch(last_game_query_string, params.team, params.opposingTeam)
-
+        
         last_game_players_stats = [dict(row) for row in last_game_players_stats]
 
         player_ids_to_player_hm = nba_stat_calculator_p.player_ids_to_player()
