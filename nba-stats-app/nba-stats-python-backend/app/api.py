@@ -70,7 +70,6 @@ import httpx
 import numpy as np
 import xgboost as xgb
 import threading
-import random
 
 # One pool of connections will be used to connect to 1 database. The
 # database to connect to is a PostgreSQL database (through nba_pool).
