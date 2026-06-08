@@ -57,7 +57,7 @@ async def get_team_wl_ratio_against_opp_team(team: str, season_type: str, opposi
                         "All Star": "astarsseason", 
                         "Playoffs": "poffsseason"}
 
-    team_stats_table_name = "nbateamstats" + season_type_dict[season_type]
+    team_stats_table_name = "nbawlholder" + season_type_dict[season_type]
 
     regex_team_abbreviation = team + '%'
 
@@ -71,9 +71,19 @@ async def get_team_wl_ratio_against_opp_team(team: str, season_type: str, opposi
     
     team_matches = [tuple((dict(row)).values()) for row in team_matches]
 
-    matches_against_opp_team = [match for match in team_matches if match[0][-3:] == opposing_team_abbreviation]
+    matches_against_opp_team = [match for match in team_matches if match if match[0][-3:] == opposing_team_abbreviation]
     
-    team_binary_win_loss_array = [1 if match[1] == 'W' else 0 for match in matches_against_opp_team]
+    team_binary_win_loss_array = []
+
+    for match in matches_against_opp_team:
+        
+        if match[1] == 'W':
+        
+            team_binary_win_loss_array.append(1)
+
+        elif match[1] == 'L':
+
+            team_binary_win_loss_array.append(0)
     
     w = sum(team_binary_win_loss_array)
     
