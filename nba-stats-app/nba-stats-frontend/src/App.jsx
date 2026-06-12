@@ -98,7 +98,7 @@ function App() {
       dispatch(setPlayerNamesArray(playerNames));
       dispatch(setTeamAbbreviationsArray(teamAbbreviations));
     };
-    if (token){
+    if (token) {
       setPlayersAndTeams(); /* Run function to get teams and players (or lack thereof). */
     };
   }, [token]);
@@ -184,156 +184,166 @@ function App() {
   /* The following two functions get stats and populate them into the DOM */
 
   const getPlayerStats = async (playerFullName, season, seasonType, opposingTeam, recentGames) => {
-    const newDictionary = await calculatedPlayerStatsService.calculatedPlayerStats({playerFullName, 
-                                             season, 
-                                             seasonType, 
-                                             opposingTeam, 
-                                             recentGames}, token);
+    if (!opposingTeam) {
+      opposingTeam = "";
+    }
+    const newDictionary = await calculatedPlayerStatsService.calculatedPlayerStats({
+      playerFullName,
+      season,
+      seasonType,
+      opposingTeam,
+      recentGames
+    }, token);
     const timeoutDuration = 2000;
     window.scrollTo(0, 0)
-    if (typeof newDictionary === "object"){
+    if (typeof newDictionary === "object") {
       dispatch(setSuccessMessage("Data collected successfully!"));
       setTimeout(() => {
         dispatch(setSuccessMessage(null));
-        }, timeoutDuration);
+      }, timeoutDuration);
       dispatch(setPlayerStats(true));
       dispatch(setPlayerStatsDictionary(newDictionary));
       dispatch(setPlayerName(playerFullName));
-    } else if (newDictionary === 2){
+    } else if (newDictionary === 2) {
       dispatch(setErrorMessage("This player currently does not have any game data."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));
-        }, timeoutDuration);
-    } else if (newDictionary === 3){
+      }, timeoutDuration);
+    } else if (newDictionary === 3) {
       dispatch(setErrorMessage("Please enter a valid season for the player."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));
-        }, timeoutDuration);
-    } else if (newDictionary === 4){
+      }, timeoutDuration);
+    } else if (newDictionary === 4) {
       dispatch(setErrorMessage("This player has not played against the entered team.\
                                 Change either team or leave the field blank for no opposing team projections."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));
-          }, timeoutDuration);
-      };
+      }, timeoutDuration);
+    };
   };
 
   const getMatchupStats = async (team, season, seasonType, opposingTeam, recentGames) => {
-      const newDictionary = await calculatedMatchupStatsService.calculatedMatchupStats({team,
-                                                                                season,
-                                                                                seasonType, 
-                                                                                opposingTeam,
-                                                                                recentGames}, token);
-      const timeoutDuration = 2000;
-      window.scrollTo(0, 0)
-      if (typeof newDictionary.matchup_stats === "object" && typeof newDictionary.ratio_stats === "object"){
-        dispatch(setSuccessMessage("Data collected successfully!"));
-        setTimeout(() => {
-          dispatch(setSuccessMessage(null));
-          }, timeoutDuration);
-        dispatch(setTeamStats(true));
-        dispatch(setTeamStatsDictionary(newDictionary.matchup_stats));
-        dispatch(setRatioDictionary(newDictionary.ratio_stats));
-        dispatch(setLastGameStatsDictionary(newDictionary.last_game_stats));
-        dispatch(setInjuredPlayersDictionary(newDictionary.injured_nba_players));
-        dispatch(setTeamPoints(newDictionary.team_points));
-        dispatch(setOppTeamPoints(newDictionary.opposing_team_points));
-      } else if (newDictionary.matchup_stats === 2){
-        dispatch(setErrorMessage("This player currently does not have any game data."));
-        setTimeout(() => {
-          dispatch(setErrorMessage(null));
-          }, timeoutDuration);
-      } else if (newDictionary.matchup_stats === 3 || newDictionary.ratio_stats === 3){
-        dispatch(setErrorMessage("Please enter a valid season."));
-        setTimeout(() => {
-          dispatch(setErrorMessage(null));
-          }, timeoutDuration);
-      } else if (newDictionary.matchup_stats === 4 || newDictionary.ratio_stats === 4){
-        dispatch(setErrorMessage("This team has not played against the entered team.\
+    if (!opposingTeam) {
+      opposingTeam = "";
+    }
+    const newDictionary = await calculatedMatchupStatsService.calculatedMatchupStats({
+      team,
+      season,
+      seasonType,
+      opposingTeam,
+      recentGames
+    }, token);
+    const timeoutDuration = 2000;
+    window.scrollTo(0, 0)
+    if (typeof newDictionary.matchup_stats === "object" && typeof newDictionary.ratio_stats === "object") {
+      dispatch(setSuccessMessage("Data collected successfully!"));
+      setTimeout(() => {
+        dispatch(setSuccessMessage(null));
+      }, timeoutDuration);
+      dispatch(setTeamStats(true));
+      dispatch(setTeamStatsDictionary(newDictionary.matchup_stats));
+      dispatch(setRatioDictionary(newDictionary.ratio_stats));
+      dispatch(setLastGameStatsDictionary(newDictionary.last_game_stats));
+      dispatch(setInjuredPlayersDictionary(newDictionary.injured_nba_players));
+      dispatch(setTeamPoints(newDictionary.team_points));
+      dispatch(setOppTeamPoints(newDictionary.opposing_team_points));
+    } else if (newDictionary.matchup_stats === 2) {
+      dispatch(setErrorMessage("This player currently does not have any game data."));
+      setTimeout(() => {
+        dispatch(setErrorMessage(null));
+      }, timeoutDuration);
+    } else if (newDictionary.matchup_stats === 3 || newDictionary.ratio_stats === 3) {
+      dispatch(setErrorMessage("Please enter a valid season."));
+      setTimeout(() => {
+        dispatch(setErrorMessage(null));
+      }, timeoutDuration);
+    } else if (newDictionary.matchup_stats === 4 || newDictionary.ratio_stats === 4) {
+      dispatch(setErrorMessage("This team has not played against the entered team.\
                                   Change either team or leave the field blank for no opposing team projections."));
-        setTimeout(() => {
-          dispatch(setErrorMessage(null));
-          }, timeoutDuration);
-      };
+      setTimeout(() => {
+        dispatch(setErrorMessage(null));
+      }, timeoutDuration);
+    };
   };
-  
+
   /* Entire app is described below */
   const Home = () => {
     return (
       <div className="home-content">
         {titleDisplay && <h1>
-                          <span>
-                            NBA Projected Stat Calculator
-                          </span>
-                        </h1>}
-        
-        {mainPageDisplay && <Inputs 
-                            getPlayerStats={getPlayerStats} 
-                            getMatchupStats={getMatchupStats}
-                            playerNamesArray={playerNamesArray}
-                            teamAbbreviationsArray={teamAbbreviationsArray}
-                            />}
-        
+          <span>
+            NBA Projected Stat Calculator
+          </span>
+        </h1>}
+
+        {mainPageDisplay && <Inputs
+          getPlayerStats={getPlayerStats}
+          getMatchupStats={getMatchupStats}
+          playerNamesArray={playerNamesArray}
+          teamAbbreviationsArray={teamAbbreviationsArray}
+        />}
+
         {mainPageDisplay && <React.Fragment>
-                              <br />
-                                <button onClick={() => switchBetweenMainAndHelp(true)}>
-                                  Help
-                                </button>
-                            </React.Fragment>}
-        
+          <br />
+          <button onClick={() => switchBetweenMainAndHelp(true)}>
+            Help
+          </button>
+        </React.Fragment>}
+
         {mainPageDisplay && <React.Fragment>
-                              <br/>
-                                <button 
-                                onClick={removeUser} 
-                                className="logout">
-                                  Log Out
-                                </button>
-                            </React.Fragment>}
-        
+          <br />
+          <button
+            onClick={removeUser}
+            className="logout">
+            Log Out
+          </button>
+        </React.Fragment>}
+
         {helpPageDisplay && <Help />}
-        
-        {helpPageDisplay && <button 
-                            onClick={() => switchBetweenMainAndHelp(false)}>
-                              Return to Inputs
-                            </button>}
-        
+
+        {helpPageDisplay && <button
+          onClick={() => switchBetweenMainAndHelp(false)}>
+          Return to Inputs
+        </button>}
+
         {statsPageDisplay && <h1>{playerName}</h1>}
-        
-        {statsPageDisplay && <IndividualPlayerStatsDictionaryDisplay 
-                              statsDictionary = {playerStatsDictionary} 
-                              />}
-        
+
+        {statsPageDisplay && <IndividualPlayerStatsDictionaryDisplay
+          statsDictionary={playerStatsDictionary}
+        />}
+
         {statsPageDisplay && <React.Fragment>
-                               <br/>
-                                 <button 
-                                 onClick={removePlayerStats}>
-                                  Return to Inputs
-                                 </button>
-                             </React.Fragment>}
-        
+          <br />
+          <button
+            onClick={removePlayerStats}>
+            Return to Inputs
+          </button>
+        </React.Fragment>}
+
         {OAuthDisplay && <React.Fragment>
-                           <OAuthLogin />
-                           <OAuthCallback />
-                         </React.Fragment>}
-        
-        {teamStatsPageDisplay && <RatioDictionaryDisplay 
-                                  ratioDict={ratioDict} 
-                                  teamStatsDictionary={teamStatsDictionary} 
-                                  teamPoints={teamPoints} 
-                                  oppTeamPoints={oppTeamPoints}/>}
-        
-        {teamStatsPageDisplay && <NBATeamsAndPlayersCalculatedStatsDisplay 
-                                  teamStatsDictionary={teamStatsDictionary} 
-                                  lastGameStatsDictionary={lastGameStatsDictionary} 
-                                  injuredPlayersDictionary={injuredPlayersDictionary}/>}
-        
+          <OAuthLogin />
+          <OAuthCallback />
+        </React.Fragment>}
+
+        {teamStatsPageDisplay && <RatioDictionaryDisplay
+          ratioDict={ratioDict}
+          teamStatsDictionary={teamStatsDictionary}
+          teamPoints={teamPoints}
+          oppTeamPoints={oppTeamPoints} />}
+
+        {teamStatsPageDisplay && <NBATeamsAndPlayersCalculatedStatsDisplay
+          teamStatsDictionary={teamStatsDictionary}
+          lastGameStatsDictionary={lastGameStatsDictionary}
+          injuredPlayersDictionary={injuredPlayersDictionary} />}
+
         {teamStatsPageDisplay && <React.Fragment>
-                                   <br/>
-                                     <button 
-                                     onClick={removeTeamStats}>
-                                       Return to Inputs
-                                     </button>
-                                 </React.Fragment>}
+          <br />
+          <button
+            onClick={removeTeamStats}>
+            Return to Inputs
+          </button>
+        </React.Fragment>}
       </div>
     );
   };
@@ -342,16 +352,16 @@ function App() {
     <div className="main-container">
       <Router>
         {mainPageDisplay && <nav className="topleft">
-                              <Link 
-                              to="/upcoming-games" 
-                              onClick={goToUpcomingGames}>
-                                Upcoming Games
-                              </Link>
-                            </nav>}
+          <Link
+            to="/upcoming-games"
+            onClick={goToUpcomingGames}>
+            Upcoming Games
+          </Link>
+        </nav>}
         <Success message={successMessage} />
         <Error message={errorMessage} />
         <Routes>
-          <Route path='/' element = {<Home />}></Route>
+          <Route path='/' element={<Home />}></Route>
           <Route path="/upcoming-games" element={<NBATeamsAndPlayersStatsDisplay seed={seed} teamsArray={teamsArray} playersArray={playersArray} />}></Route>
         </Routes>
       </Router>
@@ -360,15 +370,15 @@ function App() {
 };
 
 const store = configureStore({
-    reducer: {
-      booleanReducer: booleanReducer,
-      dictReducer: dictReducer,
-      nullReducer: nullReducer,
-      stringReducer: stringReducer,
-      arrayReducer: arrayReducer,
-      numberReducer: numberReducer
-    }
-  });
+  reducer: {
+    booleanReducer: booleanReducer,
+    dictReducer: dictReducer,
+    nullReducer: nullReducer,
+    stringReducer: stringReducer,
+    arrayReducer: arrayReducer,
+    numberReducer: numberReducer
+  }
+});
 
 const AppWrapper = () => {
 
