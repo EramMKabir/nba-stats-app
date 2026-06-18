@@ -249,7 +249,7 @@ function App() {
       dispatch(setTeamPoints(newDictionary.team_points));
       dispatch(setOppTeamPoints(newDictionary.opposing_team_points));
     } else if (newDictionary.matchup_stats === 2) {
-      dispatch(setErrorMessage("This player currently does not have any game data."));
+      dispatch(setErrorMessage("This team currently does not have any game data."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));
       }, timeoutDuration);

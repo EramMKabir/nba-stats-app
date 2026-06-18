@@ -57,6 +57,7 @@ from contextlib import asynccontextmanager
 from pkce import generate_pkce
 import nba_stat_calculator
 import nba_stat_calculator_p
+import mc_sim
 import get_team_wl_ratio_against_opp_team
 import asyncio
 import asyncpg
@@ -70,6 +71,7 @@ import httpx
 import numpy as np
 import xgboost as xgb
 import threading
+import random
 
 # One pool of connections will be used to connect to 1 database. The
 # database to connect to is a PostgreSQL database (through nba_pool).
@@ -810,9 +812,21 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
 
         np_opp_player_stats_list = np.nansum(np_opp_player_stats_list, axis=0)
 
-        team_pts = use_model(np_player_stats_list, params, num_players)
+        pace_team, pace_opp = await get_paces(params)
 
-        opp_team_pts = use_model(np_opp_player_stats_list, params, num_opp_players)
+        if isinstance(pace_team, int):
+
+            return pace_team
+
+        pace_team = [sum(pace_team)/len(pace_team)]
+        
+        pace_opp = [sum(pace_opp)/len(pace_opp)]
+
+        league_averages = await get_league_averages(params)
+
+        team_pts = mc_sim.run_monte_carlo_simulation(np_player_stats_list, np_opp_player_stats_list, pace_team[0], league_averages)
+
+        opp_team_pts = mc_sim.run_monte_carlo_simulation(np_opp_player_stats_list, np_player_stats_list, pace_opp[0], league_averages)
 
         num_stats = 20
 
@@ -943,7 +957,7 @@ async def get_last_game_stats(params: Annotated[matchupCalculatorParams, Query()
 
         player_ids_to_player_hm = nba_stat_calculator_p.player_ids_to_player()
 
-        last_game_players_stats = {player_ids_to_player_hm[row["player_id"]]: row for row in last_game_players_stats}
+        last_game_players_stats = {player_ids_to_player_hm[row["player_id"]]: row for row in last_game_players_stats if row["player_id"] in player_ids_to_player_hm}
 
         return last_game_players_stats
 
@@ -985,6 +999,78 @@ async def get_starters(params: Annotated[matchupCalculatorParams, Query()]):
             starters_hm[row["team_abbreviation"]].add(row["starter"])
 
         return starters_hm
+    
+# This function retrieves paces of play
+# for both teams.
+
+async def get_paces(params: Annotated[matchupCalculatorParams, Query()]):
+
+    season_types_hm = {"Pre Season": "preseason", "Regular Season": "regseason", "All Star": "astars", "Playoffs": "poffsseason"}
+
+    year_season_id_dict = {"Pre Season": [2025, 12024, "preseason"],
+                           "Regular Season": [2025, 22024, "regseason"],
+                           "Playoffs": [2025, 42024, "poffsseason"]}
+
+    year_season_id_array = year_season_id_dict[params.seasonType]
+
+    wrong_season_error_code = 3
+
+    no_team_data = 2
+
+    try:
+    
+        year_diff = year_season_id_array[0] - int(params.season[0:2] + params.season[-2:])
+
+        if params.season[-2:] == "00":
+
+            year_diff = year_season_id_array[0] - (int(params.season[0:4]) + 1)
+
+        season_id = str(year_season_id_array[1] - year_diff)
+
+    except:
+        
+        return wrong_season_error_code, wrong_season_error_code
+
+    async with nba_pool.acquire() as cur:
+
+        paces_team = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{season_types_hm[params.seasonType]} n1 \
+                                INNER JOIN nbawlholder{season_types_hm[params.seasonType]} n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.team}' \
+                                AND n2.team_abbreviation = '{params.opposingTeam}'")
+
+        paces_team = [row["pace"] for row in paces_team]
+
+        paces_opp = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{season_types_hm[params.seasonType]} n1 \
+                                INNER JOIN nbawlholder{season_types_hm[params.seasonType]} n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.opposingTeam}' \
+                                AND n2.team_abbreviation = '{params.team}'")
+
+        paces_opp = [row["pace"] for row in paces_opp]
+
+        if not paces_team or not paces_opp:
+
+            return no_team_data, no_team_data
+
+        return paces_team, paces_opp
+
+# This function retrieves shot %'s, turnovers %,
+# and offensive rebounds % for a season.
+
+async def get_league_averages(params: Annotated[statCalculatorParams, Query()]):
+
+    async with nba_pool.acquire() as cur:
+
+        league_avgs = await cur.fetch(f"SELECT field_goals_percentage, \
+                                      field_goal_threes_percentage, \
+                                      free_throws_percentage, \
+                                      turnovers_percentage, \
+                                      offensive_rebounds_percentage \
+                                      FROM nbaleagueaverages \
+                                      WHERE season = '{params.season}'")
+        
+        league_avgs = [float(row[i]) for row in league_avgs for i in range(len(row))]
+
+        return league_avgs
 
 # This function calls the get_player_calculated_stats
 # function and returns the result to the website.
