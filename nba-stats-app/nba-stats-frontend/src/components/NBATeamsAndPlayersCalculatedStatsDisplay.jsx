@@ -169,9 +169,9 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
             orderedHeaders.forEach((statName) => {
               
               const playerInLastGame = lastGameStatsDictionary[player];
-              const stat = stats[statName];
+              const stat = statName === "PLUS_MINUS" ? stats[statName] : Math.max(0, stats[statName]);
               const lastGameStat = playerInLastGame ? lastGameStatsDictionary[player][statNameToDisplayName[statName]] : 0;
-              
+
               orderedStats.push(`${statName}: ${stat}`);
               if (playerInLastGame && (stat === 0 || stat === 0.0)){
                   orderedStats.push(`${statName} Absolute Change from Last Recent Game: ${(lastGameStat > stat) ? '-' : (lastGameStat < stat ? '+' : '')}${lastGameStat}`);
@@ -201,9 +201,9 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
             orderedHeaders.forEach((statName) => {
             
               const playerInLastGame = lastGameStatsDictionary[player];
-              const stat = stats[statName];
+              const stat = statName === "PLUS_MINUS" ? stats[statName] : Math.max(0, stats[statName]);
               const lastGameStat = playerInLastGame ? lastGameStatsDictionary[player][statNameToDisplayName[statName]] : 0;
-            
+
               if (playerInLastGame && (stat === 0 || stat === 0.0)){
                   lastGameStats.push(`${(lastGameStat > stat) ? '-' : (lastGameStat < stat ? '+' : '')}${lastGameStat}`);
               } else if (playerInLastGame && lastGameStat > stat){
@@ -327,7 +327,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                           <tr key = {player}>
                             <td key = {player}>{player}</td>
                             {orderedHeaders.map((statNames, index) => (
-                            <td key = {`${player}-${statNames}`}>{stats[statNames]}</td>
+                            <td key = {`${player}-${statNames}`}>{statNames === "PLUS_MINUS" ? stats[statNames] : Math.max(0, stats[statNames])}</td>
                             ))}
                           </tr>
                           <tr key = {`lastGame-${player}`}>
@@ -362,7 +362,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                           <tr key = {player}>
                             <td key = {player}>{player}</td>
                             {orderedHeaders.map((statNames, index) => (
-                            <td key = {`${player}-${statNames}`}>{stats[statNames]}</td>
+                            <td key = {`${player}-${statNames}`}>{statNames === "PLUS_MINUS" ? stats[statNames] : Math.max(0, stats[statNames])}</td>
                             ))}
                           </tr>
                           <tr key = {`lastGame-${player}`}>

@@ -75,7 +75,7 @@ const IndividualPlayerStatsDictionaryDisplay = ({ statsDictionary }) => {
       <div>
         {orderedHeaders.map((statNames, index) => (
           <div key={index}>
-            <strong>{statNames}:</strong> {statsDictionary[statNames]}
+            <strong>{statNames}:</strong> {statNames === "PLUS_MINUS" ? statsDictionary[statNames] : Math.max(0, statsDictionary[statNames])}
           </div>
         ))}
       </div>
