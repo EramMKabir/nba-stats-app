@@ -704,15 +704,15 @@ cpdef calculate_team_stats(str team,
 
     # variable for holding result of extract_column function
 
-    cdef cnp.double_t[::1] col_arr = np.empty(max_num_of_games, dtype=np.float64)
+    cdef cnp.double_t[:, ::1] col_arr = np.empty((n, max_num_of_games), dtype=np.float64)
 
     # variable for holding result of get_weight_value function
 
-    cdef cnp.double_t[::1] weights = np.empty(max_num_of_games, dtype=np.float64)
+    cdef cnp.double_t[:, ::1] weights = np.empty((n, max_num_of_games), dtype=np.float64)
 
     # variable for holding result of fast_2D_multiply function
 
-    cdef cnp.double_t[:, ::1] out = np.empty((max_num_of_games, num_stats), dtype=np.float64)
+    cdef cnp.double_t[:, :, ::1] out = np.empty((n, max_num_of_games, num_stats), dtype=np.float64)
 
     # variable for getting rows of player_np_arrays_mv where 
     # the player faced off against the opposing team
@@ -744,11 +744,11 @@ cpdef calculate_team_stats(str team,
     # variable to hold averages of rows of player_np_arrays_mv where 
     # the player faced off against the opposing team
 
-    cdef cnp.double_t[::1] matchup_avgs = np.empty(num_stats, dtype=np.float64)
+    cdef cnp.double_t[:, ::1] matchup_avgs = np.empty((n, num_stats), dtype=np.float64)
     
     # variable to hold averages of player_np_arrays_mv for a player
 
-    cdef cnp.double_t[::1] all_seasons_avgs = np.empty(num_stats, dtype=np.float64)
+    cdef cnp.double_t[:, ::1] all_seasons_avgs = np.empty((n, num_stats), dtype=np.float64)
 
     # used to iterate through all_seasons_avgs and matchup_avgs
     # to calculate player's additional stats against the 
@@ -895,9 +895,9 @@ cpdef calculate_team_stats(str team,
 
             player_stats_avg_mv[index, i] = 0.0
 
-            matchup_avgs[i] = 0.0
+            matchup_avgs[index, i] = 0.0
 
-            all_seasons_avgs[i] = 0.0
+            all_seasons_avgs[index, i] = 0.0
 
             player_deltas[index, i] = 0.0
 
@@ -915,24 +915,24 @@ cpdef calculate_team_stats(str team,
 
         counters[index] = 0
 
-        for i in range(col_arr.shape[0]):
+        for i in range(col_arr.shape[1]):
 
-            col_arr[i] = 0.0
+            col_arr[index, i] = 0.0
 
-            weights[i] = 0.0
+            weights[index, i] = 0.0
 
-            for j in range(out.shape[1]):
+            for j in range(out.shape[2]):
 
-                out[i, j] = 0.0
+                out[index, i, j] = 0.0
 
         # get the weighted stat averages of a player
         # using create_player_stats_avg_mv
 
         create_player_stats_avg_mv(player_np_arrays_mv[index], 
                                    player_stats_avg_mv[index], 
-                                   col_arr, 
-                                   weights, 
-                                   out, 
+                                   col_arr[index], 
+                                   weights[index], 
+                                   out[index], 
                                    weighted_sum[index], 
                                    recent, 
                                    valid_rows)
@@ -1028,15 +1028,15 @@ cpdef calculate_team_stats(str team,
         # the opposing team (hence the
         # name "player_deltas")
 
-        fast_nanmean_2D(player_stats_opposing_teams_mv[index], matchup_avgs, 0, counters[index])
+        fast_nanmean_2D(player_stats_opposing_teams_mv[index], matchup_avgs[index], 0, counters[index])
 
-        fast_nanmean_2D(player_np_arrays_mv[index], all_seasons_avgs, recent, valid_rows)
+        fast_nanmean_2D(player_np_arrays_mv[index], all_seasons_avgs[index], recent, valid_rows)
 
         n_elements = player_deltas.shape[1]
 
         for i in range(n_elements):
 
-            temp_delta_holder = matchup_avgs[i] - all_seasons_avgs[i]
+            temp_delta_holder = matchup_avgs[index, i] - all_seasons_avgs[index, i]
         
             player_deltas[index, i] = round_to_one_decimal_place(temp_delta_holder)
 
