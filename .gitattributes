@@ -1,3 +1,4 @@
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.sql filter=lfs diff=lfs merge=lfs -text
+/Users/zerorebirth/Desktop/AllDesktopFiles/nba-stats-app-holder/nba-stats-app/nba-stats-python-backend/schemas.sql filter=lfs diff=lfs merge=lfs -text
 schemas.sql filter=lfs diff=lfs merge=lfs -text
