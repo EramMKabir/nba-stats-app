@@ -824,9 +824,11 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
 
         league_averages = await get_league_averages(params)
 
-        team_pts = mc_sim.run_monte_carlo_simulation(np_player_stats_list, np_opp_player_stats_list, pace_team[0], league_averages)
+        four_factors_t, four_factors_ot = await get_four_factors(params)
 
-        opp_team_pts = mc_sim.run_monte_carlo_simulation(np_opp_player_stats_list, np_player_stats_list, pace_opp[0], league_averages)
+        team_pts = mc_sim.run_monte_carlo_simulation(np_player_stats_list, np_opp_player_stats_list, pace_team[0], league_averages, four_factors_ot)
+
+        opp_team_pts = mc_sim.run_monte_carlo_simulation(np_opp_player_stats_list, np_player_stats_list, pace_opp[0], league_averages, four_factors_t)
 
         num_stats = 20
 
@@ -1005,8 +1007,6 @@ async def get_starters(params: Annotated[matchupCalculatorParams, Query()]):
 
 async def get_paces(params: Annotated[matchupCalculatorParams, Query()]):
 
-    season_types_hm = {"Pre Season": "preseason", "Regular Season": "regseason", "All Star": "astars", "Playoffs": "poffsseason"}
-
     year_season_id_dict = {"Pre Season": [2025, 12024, "preseason"],
                            "Regular Season": [2025, 22024, "regseason"],
                            "Playoffs": [2025, 42024, "poffsseason"]}
@@ -1033,15 +1033,15 @@ async def get_paces(params: Annotated[matchupCalculatorParams, Query()]):
 
     async with nba_pool.acquire() as cur:
 
-        paces_team = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{season_types_hm[params.seasonType]} n1 \
-                                INNER JOIN nbawlholder{season_types_hm[params.seasonType]} n2 ON n1.game_id=n2.game_id \
+        paces_team = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{year_season_id_dict[params.seasonType][2]} n1 \
+                                INNER JOIN nbawlholder{year_season_id_dict[params.seasonType][2]} n2 ON n1.game_id=n2.game_id \
                                 WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.team}' \
                                 AND n2.team_abbreviation = '{params.opposingTeam}'")
 
         paces_team = [row["pace"] for row in paces_team]
 
-        paces_opp = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{season_types_hm[params.seasonType]} n1 \
-                                INNER JOIN nbawlholder{season_types_hm[params.seasonType]} n2 ON n1.game_id=n2.game_id \
+        paces_opp = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{year_season_id_dict[params.seasonType][2]} n1 \
+                                INNER JOIN nbawlholder{year_season_id_dict[params.seasonType][2]} n2 ON n1.game_id=n2.game_id \
                                 WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.opposingTeam}' \
                                 AND n2.team_abbreviation = '{params.team}'")
 
@@ -1056,7 +1056,7 @@ async def get_paces(params: Annotated[matchupCalculatorParams, Query()]):
 # This function retrieves shot %'s, turnovers %,
 # and offensive rebounds % for a season.
 
-async def get_league_averages(params: Annotated[statCalculatorParams, Query()]):
+async def get_league_averages(params: Annotated[matchupCalculatorParams, Query()]):
 
     async with nba_pool.acquire() as cur:
 
@@ -1074,6 +1074,28 @@ async def get_league_averages(params: Annotated[statCalculatorParams, Query()]):
 
 # This function calls the get_player_calculated_stats
 # function and returns the result to the website.
+
+async def get_four_factors(params: Annotated[matchupCalculatorParams, Query()]):
+
+    season_types_hm = {"Pre Season": "preseason",
+                       "Regular Season": "regseason",
+                       "Playoffs": "poffsseason"}
+
+    async with nba_pool.acquire() as cur:
+
+        four_factors_t = await cur.fetch(f"SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
+                                        INNER JOIN (SELECT DISTINCT team_name FROM nbawlholder{season_types_hm[params.seasonType]} WHERE team_abbreviation = '{params.team}') rs ON rs.team_name = nff.team_name \
+                                        WHERE nff.season = '{params.season}'")
+        
+        four_factors_t = [float(row[i]) for row in four_factors_t for i in range(len(row))]
+
+        four_factors_ot = await cur.fetch(f"SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
+                                        INNER JOIN (SELECT DISTINCT team_name FROM nbawlholder{season_types_hm[params.seasonType]} WHERE team_abbreviation = '{params.opposingTeam}') rs ON rs.team_name = nff.team_name \
+                                        WHERE nff.season = '{params.season}'")
+
+        four_factors_ot = [float(row[i]) for row in four_factors_ot for i in range(len(row))]
+
+        return four_factors_t, four_factors_ot
 
 @app.get("/calculatedplayerstats", status_code=200)
 async def get_player_stats(params: Annotated[statCalculatorParams, Query()], current_user: dict = Depends(get_current_user)):
