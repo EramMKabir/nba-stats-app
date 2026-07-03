@@ -110,16 +110,14 @@ For this app, you'll need:
 
 ### Installation
 
-1. Clone this repository:
-
-   Install git-lfs (must be done first):
+1. Install git-lfs (must be done first):
 
    ```sh
    brew install git-lfs
    git lfs install
    ```
    Then clone this repository:
-   
+
    ```sh
    git clone https://github.com/EramMKabir/nba-stats-app.git
    ```
