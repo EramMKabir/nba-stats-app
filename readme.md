@@ -112,6 +112,13 @@ For this app, you'll need:
 
 1. Clone this repository:
 
+   Install git-lfs (must be done first):
+
+   ```sh
+   brew install git-lfs
+   git lfs install
+   ```
+
    ```sh
    git clone https://github.com/EramMKabir/nba-stats-app.git
    ```
@@ -119,25 +126,6 @@ For this app, you'll need:
 
    ```sh
    cd nba-stats-app
-   ```
-
-   Install git-lfs:
-
-   ```sh
-   brew install git-lfs
-   git lfs install
-   ```
-
-   Then fetch the .sql file using:
-
-   ```sh
-   git lfs fetch --include="/path/to/schemas.sql"
-   ```
-
-   And checkout the file:
-
-   ```sh
-   git lfs checkout
    ```
 
 2. Install a database client for PostgreSQL, then
