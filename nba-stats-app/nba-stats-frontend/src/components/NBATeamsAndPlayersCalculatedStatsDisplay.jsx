@@ -69,9 +69,6 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     using the injuredPlayersDictionary
     passed as a prop.
 
-    cssStyleString is meant to be
-    the styling for the HTML table.
-
     orderedHeaders is made to
     order the NBA stat names
     in a specific order for
@@ -236,17 +233,13 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     2. Display the first team name
        as a header.
 
-    3. If the user is on a mobile
-       device, display each player's
-       stats in their own table,
-       with the stats listed vertically.
-
-    4. If the user is on a desktop
-       or laptop, display all players'
+    3. Display all players'
        stats in one table, with the
        stats listed horizontally.
+       This applies for both desktop
+       and mobile views.
 
-    5. Repeat steps 2-4 for the second
+    4. Repeat steps 2 and 3 for the second
        team.
 
     The CSS styling for the td and th 

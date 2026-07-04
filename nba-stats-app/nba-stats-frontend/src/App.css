@@ -55,7 +55,7 @@
     z-index: 10;
   }
 
-  .upcoming-stats-wrapper {
+  .upcoming-stats-wrapper, .table-wrapper {
     overflow-x: auto;
     width: 100%;
     margin-bottom: 1rem;
@@ -66,12 +66,6 @@
     left: 0;
     margin: 0;
     z-index: 10;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-    width: 100%;
-    margin-bottom: 1rem;
   }
 
   .table.table {
@@ -261,3 +255,37 @@
     min-height: calc(100vh - 4rem);
   }
 }
+
+.error {
+  color: red;
+  background: lightgrey;
+  font-size: 20px;
+  border-style: solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.success {
+  color: green;
+  background: lightgrey;
+  font-size: 20px;
+  border-style: solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.main-container {
+  width: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 958px;
+} 

@@ -127,8 +127,6 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
     navigate('/');
   };
 
-  /* Return null if teamsArray has no data or playersArray has no data. */
-
   /* Ordered list of headers for the stats display */
   const orderedHeaders = ["TEAM",
     "PLAYER",
@@ -195,12 +193,10 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
   the stats display: one for mobile 
   and one for desktop/laptop. 
 
-  Both views display the same stats, 
-  but the mobile view displays them 
-  in a more vertical format within an
-  HTML table, while the desktop/laptop 
-  view displays more horizontally within
-  an HTML table.
+  They essentially show the same data,
+  but the mobile view shows headers with
+  stats, while the desktop view shows 
+  headers on top and stats separately.
 
   The code simply sets up the HTML tables.
   */

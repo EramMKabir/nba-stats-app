@@ -161,6 +161,11 @@ function App() {
     window.scrollTo(0, 0);
   };
 
+  /*
+  This function switches between the
+  main page and the Help tab. 
+  */
+
   const switchBetweenMainAndHelp = (value) => {
     window.scrollTo(0, 0);
     dispatch(setHelpDisplay(value));
@@ -195,7 +200,7 @@ function App() {
       recentGames
     }, token);
     const timeoutDuration = 2000;
-    window.scrollTo(0, 0)
+    window.scrollTo(0, 0);
     if (typeof newDictionary === "object") {
       dispatch(setSuccessMessage("Data collected successfully!"));
       setTimeout(() => {
@@ -215,7 +220,7 @@ function App() {
         dispatch(setErrorMessage(null));
       }, timeoutDuration);
     } else if (newDictionary === 4) {
-      dispatch(setErrorMessage("This player has not played against the entered team.\
+      dispatch(setErrorMessage("This player has not played against the entered team. \
                                 Change either team or leave the field blank for no opposing team projections."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));
@@ -235,7 +240,7 @@ function App() {
       recentGames
     }, token);
     const timeoutDuration = 2000;
-    window.scrollTo(0, 0)
+    window.scrollTo(0, 0);
     if (typeof newDictionary.matchup_stats === "object" && typeof newDictionary.ratio_stats === "object") {
       dispatch(setSuccessMessage("Data collected successfully!"));
       setTimeout(() => {
@@ -259,7 +264,7 @@ function App() {
         dispatch(setErrorMessage(null));
       }, timeoutDuration);
     } else if (newDictionary.matchup_stats === 4 || newDictionary.ratio_stats === 4) {
-      dispatch(setErrorMessage("This team has not played against the entered team.\
+      dispatch(setErrorMessage("This team has not played against the entered team. \
                                   Change either team or leave the field blank for no opposing team projections."));
       setTimeout(() => {
         dispatch(setErrorMessage(null));

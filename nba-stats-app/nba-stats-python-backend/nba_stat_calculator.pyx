@@ -42,7 +42,7 @@
 # create_player_stats_avg_mv: O(n*m), where n and m are the number of
 # rows and columns in weighted_values_np_arr.
 
-# calculate_winning_matchup: O(i*max(j, n)*k + z*max(y, x)*k), where i and z
+# calculate_team_stats: O(max(i*max(j, n)*k, z*max(y, x)*k)), where i and z
 # are the number of players and opposing players in a matchup, j is the number
 # of characters of the longest name out of all players in an NBA team, y is the
 # number of characters of the longest name out of all players in the opposing
@@ -50,6 +50,21 @@
 # an NBA team, x is the number of games played by the highest-attendance player
 # in the opposing NBA team, and k is the number of stats calculated by this
 # function.
+
+# calculate_matchup_stats: O(max(i*max(j, n)*k, z*max(y, x)*k)), where i and z
+# are the number of players and opposing players in a matchup, j is the number
+# of characters of the longest name out of all players in an NBA team, y is the
+# number of characters of the longest name out of all players in the opposing
+# NBA team, n is the number of games played by the highest-attendance player in
+# an NBA team, x is the number of games played by the highest-attendance player
+# in the opposing NBA team, and k is the number of stats calculated by this
+# function.
+
+# However, if we are not including the call
+# to calculate_team_stats, then calculate_
+# matchup_stats time complexity is O(n*m),
+# where n*m is the number of players * the
+# number of player name characters.
 
 # Space complexity:
 
@@ -78,11 +93,23 @@
 # create_player_stats_avg_mv: O(n*m), where n and m are the number of
 # rows and columns in weighted_values_np_arr.
 
-# calculate_winning_matchup: O(max(i*j*k, x*y*z)), where i is the depth number 
+# calculate_team_stats: O(max(i*j*k, x*y*z)), where i is the depth number 
 # of the player_matchups_l array, j and k are the rows and columns of the
 # player_matchups_l array, x is the depth number of the opp_player_matchups_mv
 # array, and y and z are the rows and columns of the opp_player_matchups_mv
 # array.
+
+# calculate_matchup_stats: O(max(i*j*k, x*y*z)), where i is the depth number 
+# of the player_matchups_l array, j and k are the rows and columns of the
+# player_matchups_l array, x is the depth number of the opp_player_matchups_mv
+# array, and y and z are the rows and columns of the opp_player_matchups_mv
+# array.
+
+# However, if we are not including the call
+# to calculate_team_stats, then calculate_
+# matchup_stats space complexity is O(n*m),
+# where n*m is the number of players * the
+# number of player name characters.
 
 #################################################################################
 # Date modified              Modifier             What was modified             #

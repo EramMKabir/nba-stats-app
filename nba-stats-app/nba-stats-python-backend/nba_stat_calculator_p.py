@@ -24,39 +24,51 @@
 
 # Time complexity:
 
+# player_stats_table_query_string: O(1)
+
+# player_stats_df_columns_list: O(1)
+
 # player_ids_to_player: O(n), where n is the number of NBA players.
 
 # round_to_one_decimal_place: O(1)
+
+# round_to_two_decimal_places: O(1)
 
 # neg_num_to_zero: O(1)
 
 # get_player_id: O(n*k), where n is the number of players that were in the NBA at any point, and k is the number of characters in the player's full name.
 
-# create_player_games_stat_avg_series: O(n*k), where n is the number of rows in the input dataframe, and k is the number of columns that are operated on in the filtered dataframe.
+# create_player_stat_avg_series: O(n*k), where n is the number of rows in the input dataframe, and k is the number of columns that are operated on in the filtered dataframe.
 
 # get_player_deltas: O(n*k), where n is the number of rows in the resulting series and k is the number of columns in the resulting series.
 
-# player_games_stat_avg_hm: O(n*k), where n and k are the rows and columns of the player's data
+# player_stat_avg_hm: O(n*k), where n and k are the rows and columns of the player's data
 
-# calculate_player_games_df: O(max(n*k, m*j)), where n and k are the rows and columns of the player's team stats, and m and j are the rows and columns of the opposing team stats.
+# calculate_player_stats_arrays: O(max(n*k, m*j)), where n and k are the rows and columns of the player's team stats, and m and j are the rows and columns of the opposing team stats.
 
 # Space complexity:
 
+# player_stats_table_query_string: O(1)
+
+# player_stats_df_columns_list: O(1)
+
 # player_ids_to_player: O(n), where n is the number of NBA players.
 
 # round_to_one_decimal_place: O(1)
+
+# round_to_two_decimal_places: O(1)
 
 # neg_num_to_zero: O(1)
 
 # get_player_id: O(n*k), where n is the number of players that were in the NBA at any point, and k is the number of characters in the player's full name.
 
-# create_player_games_stat_avg_series: O(n*k), where n is the number of rows in the input dataframe, and k is the number of columns that are operated on in the filtered dataframe.
+# create_player_stat_avg_series: O(n*k), where n is the number of rows in the input dataframe, and k is the number of columns that are operated on in the filtered dataframe.
 
 # get_player_deltas: O(n*k), where n is the number of rows in the resulting series and k is the number of columns in the resulting series.
 
-# player_games_stat_avg_hm: O(n*k), where n and k are the rows and columns of the player's data
+# player_stat_avg_hm: O(n*k), where n and k are the rows and columns of the player's data
 
-# calculate_player_games_df: O(max(n*k, m*j)), where n and k are the rows and columns of the player's team stats, and m and j are the rows and columns of the opposing team stats.
+# calculate_player_stats_arrays: O(max(n*k, m*j)), where n and k are the rows and columns of the player's team stats, and m and j are the rows and columns of the opposing team stats.
 
 #################################################################################
 # Date modified              Modifier             What was modified             #
@@ -381,7 +393,7 @@ async def get_player_deltas(opposing_team_abbreviation: str, player_full_name: s
 # by creating a dataframe from the
 # player's stats that were gotten
 # from the database, upon which the
-# create_player_games_stat_avg_series
+# create_player_stat_avg_series
 # function is called to make the
 # weighted stat averages (the
 # get_player_deltas function is also

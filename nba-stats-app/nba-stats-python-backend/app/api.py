@@ -12,9 +12,9 @@
 
 # Time complexity: Variable. At best, it is O(1), for when
 # there are no rows for nbastatcalculations and nbaplusminus.
-# The worst and most likely average case is O(n+m+q+(i*j+x*y)).
+# The worst and most likely average case is O(n+m+q+r+e+v+z+(i*j+x*y)).
 
-# - n, m and q are the rows of the queries of the database for 
+# - n, m, q, r, e, v and z are the rows of the queries of the database for 
 # the get_matchup_calculated_stats function of nba_stat_calculator.py.
 
 # - i is the number of player dataframes and j is the number of rows
@@ -28,7 +28,7 @@
 # is O(max(i*j, x*y)), so basically quadratic time complexity.
 
 # Space complexity: Same as the time complexity. At best, O(1) space is used.
-# At worst, O(n+m+q+(i*j+x*y)) space is used. 
+# At worst, O(n+m+q+r+e+v+z+(i*j+x*y)) space is used. 
 
 # Again, this is slightly misleading. The space boils down to O(max(i*j, x*y)).
 # That is the part of the algorithm that takes up the most space.
@@ -55,6 +55,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from pkce import generate_pkce
+from datetime import datetime
 import nba_stat_calculator
 import nba_stat_calculator_p
 import mc_sim
@@ -71,7 +72,6 @@ import httpx
 import numpy as np
 import xgboost as xgb
 import threading
-import random
 
 # One pool of connections will be used to connect to 1 database. The
 # database to connect to is a PostgreSQL database (through nba_pool).
@@ -112,7 +112,7 @@ oauth_server_url = os.getenv("OAUTH_SERVER_URL")
 
 code_challenge_method = os.getenv("CODE_CHALLENGE_METHOD")
 
-secure_key = secrets.token_urlsafe(32)
+secure_key = secrets.token_urlsafe(32) #Key for user validation
 
 oauth = OAuth() #Google login method
 
@@ -127,7 +127,7 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"}
 )
 
-algorithm = os.getenv("ALGORITHM") # Algorithm for user password security.
+algorithm = os.getenv("ALGORITHM") #Algorithm for user password security.
 
 # The following code initializes variables for
 # three regression models used to
@@ -238,12 +238,12 @@ async def lifespan(app: FastAPI):
 
     await asyncio.gather(*[warmup_min_conns() for _ in range(num_conns)])
 
-    #load regression models for use in calculating
-    #team points in a matchup
+    # load regression models for use in calculating
+    # team points in a matchup
 
     load_models() 
 
-    #separate thread for refreshing regression models
+    # separate thread for refreshing regression models
 
     t = threading.Thread(target=models_refresher, daemon=True)
 
@@ -553,9 +553,9 @@ async def exchange_code(request: Request, data: OAuthRequest):
 
     async with nba_pool.acquire() as cur:
 
-        await cur.execute("INSERT INTO users (username, email) \
-                          VALUES ($1, $2) \
-                          ON CONFLICT (username, email) DO NOTHING", username, email)
+        await cur.execute("INSERT INTO users (username, email, last_logged_in) \
+                          VALUES ($1, $2, $3) \
+                          ON CONFLICT (username, email) DO UPDATE SET last_logged_in = $3", username, email, datetime.now())
 
     app_token = jwt.encode(jwt_payload, secure_key, algorithm=algorithm)
 
@@ -715,12 +715,22 @@ async def get_player_calculated_stats(params: Annotated[statCalculatorParams, Qu
 # calculations. If the error variable returned by
 # the function is true, then the matchup was not
 # able to be calculated, and an error is thrown.
-# Otherwise, all the results returned by the
-# function are compressed into 1D lists, and the
-# byte results are converted into strings.
-# Finally, the cleaned results are stored 
-# into a dictionary that is returned by the
-# function.
+
+# If there is no error, then points calculations
+# for both teams are performed. The data for
+# both teams are filtered and summed up, paces
+# for both teams are obtained and averaged,
+# and league averages for certain stats are
+# obtained. This data is fed into the mc_sim
+# function to calculate the points for both
+# teams.
+
+# Then, the results returned by the 
+# nba_stat_calculator function are compressed 
+# into 1D lists, and the byte results are 
+# converted into strings. Finally, the cleaned 
+# results are stored into a dictionary that is 
+# returned by the function.
 
 # Note: the team_abbreviation_list and the
 # opp_team_abbreviation_list are simply lists
@@ -1072,8 +1082,9 @@ async def get_league_averages(params: Annotated[matchupCalculatorParams, Query()
 
         return league_avgs
 
-# This function calls the get_player_calculated_stats
-# function and returns the result to the website.
+# This function gets the four factors
+# (opp_efg_pct, opp_tov_pct, opp_fta_rate, dreb_pct)
+# for teams in a matchup.
 
 async def get_four_factors(params: Annotated[matchupCalculatorParams, Query()]):
 
@@ -1096,6 +1107,9 @@ async def get_four_factors(params: Annotated[matchupCalculatorParams, Query()]):
         four_factors_ot = [float(row[i]) for row in four_factors_ot for i in range(len(row))]
 
         return four_factors_t, four_factors_ot
+
+# This function calls the get_player_calculated_stats
+# function and returns the result to the website.
 
 @app.get("/calculatedplayerstats", status_code=200)
 async def get_player_stats(params: Annotated[statCalculatorParams, Query()], current_user: dict = Depends(get_current_user)):
