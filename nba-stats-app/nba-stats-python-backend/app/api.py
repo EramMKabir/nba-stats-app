@@ -212,15 +212,15 @@ async def lifespan(app: FastAPI):
     
             await cur.fetch("SELECT * FROM nbaplayerstatsregseason WHERE matchup LIKE 'DEN%' AND season_id = '22024' ORDER BY player_id")
 
-            await cur.fetch("SELECT * FROM nbaplayerstatspreseason WHERE matchup LIKE 'DEN%' AND season_id = '22024' ORDER BY player_id")
+            await cur.fetch("SELECT * FROM nbaplayerstatspreseason WHERE matchup LIKE 'DEN%' AND season_id = '12024' ORDER BY player_id")
 
-            await cur.fetch("SELECT * FROM nbaplayerstatspoffsseason WHERE matchup LIKE 'DEN%' AND season_id = '22024' ORDER BY player_id")
+            await cur.fetch("SELECT * FROM nbaplayerstatspoffsseason WHERE matchup LIKE 'DEN%' AND season_id = '42024' ORDER BY player_id")
 
-            await cur.fetch("SELECT matchup, wl FROM nbateamstatsregseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderregseason WHERE matchup LIKE 'DEN%'")
 
-            await cur.fetch("SELECT matchup, wl FROM nbateamstatspreseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderpreseason WHERE matchup LIKE 'DEN%'")
 
-            await cur.fetch("SELECT matchup, wl FROM nbateamstatspoffsseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderpoffsseason WHERE matchup LIKE 'DEN%'")
 
             await cur.fetch("SELECT player_name FROM nbaplayers ORDER BY player_name ASC")
 
@@ -235,6 +235,41 @@ async def lifespan(app: FastAPI):
             await cur.fetch("SELECT * FROM injurednbaplayers")
     
             await cur.fetch("SELECT team_abbreviation, starter FROM nbastarters")
+
+            await cur.fetch("SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
+                            INNER JOIN (SELECT DISTINCT team_name FROM nbawlholderpreseason WHERE team_abbreviation = 'NYK') rs ON rs.team_name = nff.team_name \
+                            WHERE nff.season = '2025-26'")
+            
+            await cur.fetch("SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
+                            INNER JOIN (SELECT DISTINCT team_name FROM nbawlholderregseason WHERE team_abbreviation = 'NYK') rs ON rs.team_name = nff.team_name \
+                            WHERE nff.season = '2025-26'")
+            
+            await cur.fetch("SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
+                            INNER JOIN (SELECT DISTINCT team_name FROM nbawlholderpoffsseason WHERE team_abbreviation = 'NYK') rs ON rs.team_name = nff.team_name \
+                            WHERE nff.season = '2025-26'")
+            
+            await cur.fetch("SELECT field_goals_percentage, \
+                                      field_goal_threes_percentage, \
+                                      free_throws_percentage, \
+                                      turnovers_percentage, \
+                                      offensive_rebounds_percentage \
+                                      FROM nbaleagueaverages \
+                                      WHERE season = '2025-26'")
+
+            await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstatspreseason n1 \
+                                INNER JOIN nbawlholderpreseason n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = '12024' AND n1.team_tricode = 'NYK' \
+                                AND n2.team_abbreviation = 'SAS'")
+            
+            await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstatsregseason n1 \
+                                INNER JOIN nbawlholderregseason n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = '22024' AND n1.team_tricode = 'NYK' \
+                                AND n2.team_abbreviation = 'SAS'")
+            
+            await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstatspoffsseason n1 \
+                                INNER JOIN nbawlholderpoffsseason n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = '42024' AND n1.team_tricode = 'NYK' \
+                                AND n2.team_abbreviation = 'SAS'")
 
     await asyncio.gather(*[warmup_min_conns() for _ in range(num_conns)])
 
