@@ -63,7 +63,7 @@ import get_team_wl_ratio_against_opp_team
 import asyncio
 import asyncpg
 import sys
-import jwt
+import json
 import os
 import time
 import secrets
@@ -112,7 +112,7 @@ oauth_server_url = os.getenv("OAUTH_SERVER_URL")
 
 code_challenge_method = os.getenv("CODE_CHALLENGE_METHOD")
 
-secure_key = secrets.token_urlsafe(32) #Key for user validation
+access_token_ttl_seconds = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "600"))
 
 oauth = OAuth() #Google login method
 
@@ -126,8 +126,6 @@ oauth.register(
     server_metadata_url=oauth_server_url,
     client_kwargs={"scope": "openid email profile"}
 )
-
-algorithm = os.getenv("ALGORITHM") #Algorithm for user password security.
 
 # The following code initializes variables for
 # three regression models used to
@@ -357,6 +355,9 @@ class OAuthRequest(BaseModel):
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+def get_access_token_key(token: str) -> str:
+    return f"access_token:{token}"
+
 def get_current_user(authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
@@ -368,11 +369,29 @@ def get_current_user(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid Authorization header")
 
     try:
-        session_data = jwt.decode(token, secure_key, algorithms=[algorithm])
-    except jwt.ExpiredSignatureError:
+        session_data = redis_client.get(get_access_token_key(token))
+    except redis.RedisError:
+        raise HTTPException(status_code=503, detail="Authentication store unavailable")
+
+    if not session_data:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
+
+    try:
+        if isinstance(session_data, bytes):
+            session_data = session_data.decode("utf-8")
+        session_data = json.loads(session_data)
+    except (TypeError, json.JSONDecodeError):
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    if not isinstance(session_data, dict):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    if session_data.get("exp", 0) < int(time.time()):
+        try:
+            redis_client.delete(get_access_token_key(token))
+        except redis.RedisError:
+            pass
+        raise HTTPException(status_code=401, detail="Token expired")
 
     return session_data
 
@@ -573,18 +592,19 @@ async def exchange_code(request: Request, data: OAuthRequest):
         userinfo_resp = await client.get(
             oauth_userinfo_url,
             headers={
-                "Authorization": f"Bearer {token_data["access_token"]}"
+                "Authorization": f"Bearer {token_data['access_token']}"
             },
         )
         user = userinfo_resp.json()
     
-    jwt_payload = {
-        "sub": user["sub"],
-        "email": user["email"],
-        "exp": int(time.time()) + 600,
-    }
-
     username, email = user.get("name"), user.get("email")
+
+    session_data = {
+        "sub": user["sub"],
+        "email": email,
+        "user": username,
+        "exp": int(time.time()) + access_token_ttl_seconds,
+    }
 
     async with nba_pool.acquire() as cur:
 
@@ -592,7 +612,15 @@ async def exchange_code(request: Request, data: OAuthRequest):
                           VALUES ($1, $2, $3) \
                           ON CONFLICT (username, email) DO UPDATE SET last_logged_in = $3", username, email, datetime.now())
 
-    app_token = jwt.encode(jwt_payload, secure_key, algorithm=algorithm)
+    app_token = secrets.token_urlsafe(48)
+    try:
+        redis_client.setex(
+            get_access_token_key(app_token),
+            access_token_ttl_seconds,
+            json.dumps(session_data)
+        )
+    except redis.RedisError:
+        raise HTTPException(status_code=503, detail="Authentication store unavailable")
 
     return JSONResponse(content={"token": app_token, "email": email, "user": username})
 

@@ -189,6 +189,11 @@ For this app, you'll need:
    redis-server
    ```
 
+   For production, keep Redis running
+   independently from FastAPI and enable
+   Redis persistence so access tokens survive
+   backend restarts and planned maintenance.
+
 6. Setup Google Cloud Platform URI.
    Make sure to go to Google Cloud
    Platform, setup a Client ID, and
@@ -206,7 +211,12 @@ For this app, you'll need:
    strings used for starting user sessions.
 
    REDIS_URL: The url for hosting
-   redis-server, which hosts user sessions.
+   redis-server, which hosts OAuth state and
+   user access tokens.
+
+   ACCESS_TOKEN_TTL_SECONDS: The number of
+   seconds a website access token remains valid.
+   Defaults to 600 when not set.
 
    GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET:
    When setting up the URI in the Installation
@@ -219,9 +229,6 @@ For this app, you'll need:
 
    PROVIDER: The email provider mentioned in 
    OAUTH_URLS above, used to log users in.
-
-   ALGORITHM: JWT signing algorithm, used to
-   initiate token authentication.
 
    CODE_CHALLENGE_METHOD: Used to provide
    security to the token authentication.
