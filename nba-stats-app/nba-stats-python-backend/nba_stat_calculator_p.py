@@ -561,9 +561,32 @@ async def calculate_player_stats_arrays(team: str,
 
     player_stats_table_columns_str = player_stats_table_query_string()
 
-    query = player_stats_table_columns_str + f"FROM {player_stats_table_name} WHERE matchup LIKE $1 AND season_id = $2 ORDER BY player_id"
+    player_stats_columns_str = player_stats_table_columns_str.removeprefix("SELECT ")
 
-    all_player_stats_info = await cur.fetch(query, team_regex, season_id)
+    include_opposing_team = len(opposing_team_abbreviation) != 1
+
+    opp_team_regex = opposing_team_abbreviation + '%' if include_opposing_team else ''
+
+    query = f"SELECT 'team' AS stats_side, {player_stats_columns_str} \
+              FROM {player_stats_table_name} \
+              WHERE matchup LIKE $1 AND season_id = $2 \
+              UNION ALL \
+              SELECT 'opp' AS stats_side, {player_stats_columns_str} \
+              FROM {player_stats_table_name} \
+              WHERE $3 AND matchup LIKE $4 AND season_id = $2 \
+              ORDER BY stats_side, player_id"
+
+    player_stats_rows = await cur.fetch(query,
+                                        team_regex,
+                                        season_id,
+                                        include_opposing_team,
+                                        opp_team_regex)
+
+    all_player_stats_info = [list(row)[1:] for row in player_stats_rows
+                             if row["stats_side"] == "team"]
+
+    all_opp_player_stats_info = [list(row)[1:] for row in player_stats_rows
+                                 if row["stats_side"] == "opp"]
 
     if not all_player_stats_info:
 
@@ -576,8 +599,6 @@ async def calculate_player_stats_arrays(team: str,
             return wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code
         
         return no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code
-    
-    all_player_stats_info = [list((dict(row)).values()) for row in all_player_stats_info]
 
     filtered_all_player_stats_info = [[float(num) for num in row[6:-1]] for row in all_player_stats_info]
 
@@ -605,7 +626,7 @@ async def calculate_player_stats_arrays(team: str,
 
     all_player_names_arr = all_player_names_arr_bytes.view(np.uint8).reshape(len(all_player_names_encoded), max_len_player_name*4)
 
-    if len(opposing_team_abbreviation) == 1:
+    if not include_opposing_team:
         
         empty_np_arr_2D_float = np.empty((0, 0), dtype=np.float64)
 
@@ -617,17 +638,9 @@ async def calculate_player_stats_arrays(team: str,
 
         return result
 
-    opp_team_regex = opposing_team_abbreviation + '%'
-
-    query = player_stats_table_columns_str + f"FROM {player_stats_table_name} WHERE matchup LIKE $1 AND season_id = $2 ORDER BY player_id"
-
-    all_opp_player_stats_info = await cur.fetch(query, opp_team_regex, season_id)
-    
     if not all_opp_player_stats_info:
         
         return no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code
-        
-    all_opp_player_stats_info = [list((dict(row)).values()) for row in all_opp_player_stats_info]
 
     filtered_all_opp_player_stats_info = [[float(num) for num in row[6:-1]] for row in all_opp_player_stats_info]
 

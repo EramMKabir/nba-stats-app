@@ -131,7 +131,9 @@ const Help = () => {
             in the app, so if you want an update,
             log out and log back in to refresh the
             data. Same logic applies for information
-            in the Upcoming Games tab.
+            in the Upcoming Games tab. Also, due to
+            security concerns, the app requires a
+            login every 10 minutes to refresh access.
         </p>
         <p>
             Have fun using the site.
