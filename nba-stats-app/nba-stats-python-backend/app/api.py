@@ -1106,19 +1106,24 @@ async def get_paces(params: Annotated[matchupCalculatorParams, Query()]):
 
     async with nba_pool.acquire() as cur:
 
-        paces_team = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{year_season_id_dict[params.seasonType][2]} n1 \
-                                INNER JOIN nbawlholder{year_season_id_dict[params.seasonType][2]} n2 ON n1.game_id=n2.game_id \
-                                WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.team}' \
-                                AND n2.team_abbreviation = '{params.opposingTeam}'")
+        season_type_suffix = year_season_id_dict[params.seasonType][2]
 
-        paces_team = [row["pace"] for row in paces_team]
+        paces = await cur.fetch(f"SELECT DISTINCT \
+                                CASE \
+                                    WHEN n1.team_tricode = $2 AND n2.team_abbreviation = $3 THEN 'team' \
+                                    WHEN n1.team_tricode = $3 AND n2.team_abbreviation = $2 THEN 'opp' \
+                                END AS pace_side, \
+                                n1.pace \
+                                FROM nbateamadvancedstats{season_type_suffix} n1 \
+                                INNER JOIN nbawlholder{season_type_suffix} n2 ON n1.game_id=n2.game_id \
+                                WHERE n2.season_id = $1 \
+                                AND ((n1.team_tricode = $2 AND n2.team_abbreviation = $3) \
+                                OR (n1.team_tricode = $3 AND n2.team_abbreviation = $2))",
+                                season_id, params.team, params.opposingTeam)
 
-        paces_opp = await cur.fetch(f"SELECT DISTINCT n1.pace FROM nbateamadvancedstats{year_season_id_dict[params.seasonType][2]} n1 \
-                                INNER JOIN nbawlholder{year_season_id_dict[params.seasonType][2]} n2 ON n1.game_id=n2.game_id \
-                                WHERE n2.season_id = '{season_id}' AND n1.team_tricode = '{params.opposingTeam}' \
-                                AND n2.team_abbreviation = '{params.team}'")
+        paces_team = [row["pace"] for row in paces if row["pace_side"] == "team"]
 
-        paces_opp = [row["pace"] for row in paces_opp]
+        paces_opp = [row["pace"] for row in paces if row["pace_side"] == "opp"]
 
         if not paces_team or not paces_opp:
 
