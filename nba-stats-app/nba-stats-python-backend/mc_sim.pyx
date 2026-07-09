@@ -17,7 +17,7 @@ import numpy as np
 cimport numpy as cnp
 from cython.parallel cimport prange
 from libc.stdlib cimport malloc, free, rand, srand
-from libc.math cimport log as c_log, sqrt as c_sqrt, cos as c_cos, pow as c_pow, round
+from libc.math cimport log as c_log, sqrt as c_sqrt, pow as c_pow, round
 from openmp cimport omp_get_thread_num, omp_get_max_threads
 
 cnp.import_array()
@@ -35,6 +35,9 @@ srand(<unsigned int>(<long long>(_time.time() * 1000000)))
 
 cdef struct RngState:
     unsigned long long s
+    double spare_normal
+    int has_spare_normal
+    char padding[40]
 
 
 cdef inline void rng_init(RngState *st, unsigned long long seed) noexcept nogil:
@@ -47,6 +50,7 @@ cdef inline void rng_init(RngState *st, unsigned long long seed) noexcept nogil:
     if z == 0:
         z = 1
     st.s = z
+    st.has_spare_normal = 0
 
 
 cdef inline double uniform(RngState *st) noexcept nogil:
@@ -59,14 +63,25 @@ cdef inline double uniform(RngState *st) noexcept nogil:
     return <double>((x * <unsigned long long>0x2545F4914F6CDD1D) >> 11) * (1.0 / 9007199254740992.0)
 
 
-# ── Box-Muller standard normal ─────────────────────────────────────────────
+# ── Marsaglia polar standard normal ───────────────────────────────────────
 cdef inline double _normal(RngState *st) noexcept nogil:
-    cdef double u1, u2
-    u1 = uniform(st)
-    while u1 == 0.0:
-        u1 = uniform(st)
-    u2 = uniform(st)
-    return c_sqrt(-2.0 * c_log(u1)) * c_cos(6.283185307179586 * u2)
+    cdef double x, y, radius_squared, multiplier
+
+    if st.has_spare_normal:
+        st.has_spare_normal = 0
+        return st.spare_normal
+
+    while True:
+        x = 2.0 * uniform(st) - 1.0
+        y = 2.0 * uniform(st) - 1.0
+        radius_squared = x * x + y * y
+        if radius_squared > 0.0 and radius_squared < 1.0:
+            break
+
+    multiplier = c_sqrt(-2.0 * c_log(radius_squared) / radius_squared)
+    st.spare_normal = y * multiplier
+    st.has_spare_normal = 1
+    return x * multiplier
 
 
 # ── Gamma(shape, 1) — Marsaglia & Tsang for shape ≥ 1 ─────────────────────
@@ -195,8 +210,9 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     cdef double scale, fg2_a, fg2_b, fg3_a, fg3_b, ft_a, ft_b
 
     # Per-iteration state (automatically thread-private inside prange)
-    cdef double game_fg2, game_fg3, game_ft, points = 0.0, roll
-    cdef int poss, shot_done
+    cdef double game_fg2, game_fg3, game_ft, points = 0.0
+    cdef double three_point_reward, two_point_reward
+    cdef double shot_reward, retry_probability
     cdef double total_points = 0.0
 
     # ── Extract offensive stats ────────────────────────────────────────────
@@ -398,75 +414,38 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
             game_fg3 = clamp(game_fg3, 0.15, 0.55)
             game_ft  = clamp(game_ft,  0.40, 0.98)
 
-            points = 0.0
-            poss = c_pace
+            # Integrate out possession-level randomness. The function only
+            # returns a mean, so sampling every event adds variance and work
+            # without changing its conditional expected value.
+            three_point_reward = (
+                prob_sf3 * 3.0 * game_ft
+                + (1.0 - prob_sf3) * game_fg3
+                * (3.0 + prob_and1 * game_ft))
+            two_point_reward = (
+                prob_sf2 * 2.0 * game_ft
+                + (1.0 - prob_sf2) * game_fg2
+                * (2.0 + prob_and1 * game_ft))
+            shot_reward = (
+                prob_3pt * three_point_reward
+                + (1.0 - prob_3pt) * two_point_reward)
 
-            while poss > 0:
-                roll = uniform(my_rng)
-
-                # ── Turnover ────────────────────────────────────────────
-                if roll < adj_tov_pct:
-                    poss = poss - 1
-
-                # ── Non-shooting free throws ────────────────────────────
-                elif roll < adj_tov_pct + prob_ns_ft:
-                    if uniform(my_rng) < game_ft:
-                        points += 1.0
-                    if uniform(my_rng) < game_ft:
-                        points += 1.0
-                    poss = poss - 1
-
-                elif roll >= adj_tov_pct + prob_ns_ft + prob_initial_shot:
-                    # Empty/late-clock possessions that produce no tracked
-                    # box-score event keep simulated FGA volume calibrated.
-                    poss = poss - 1
-
-                # ── Field goal attempt ──────────────────────────────────
-                else:
-                    shot_done = 0
-                    while shot_done == 0:
-                        if uniform(my_rng) < prob_3pt:
-                            # ── 3-point attempt ────────────────────────
-                            if uniform(my_rng) < prob_sf3:
-                                if uniform(my_rng) < game_ft:
-                                    points += 1.0
-                                if uniform(my_rng) < game_ft:
-                                    points += 1.0
-                                if uniform(my_rng) < game_ft:
-                                    points += 1.0
-                                shot_done = 1
-                            elif uniform(my_rng) < game_fg3:
-                                points += 3.0
-                                if uniform(my_rng) < prob_and1:
-                                    if uniform(my_rng) < game_ft:
-                                        points += 1.0
-                                shot_done = 1
-                            elif uniform(my_rng) >= adj_oreb_pct:
-                                shot_done = 1
-                        else:
-                            # ── 2-point attempt ────────────────────────
-                            if uniform(my_rng) < prob_sf2:
-                                if uniform(my_rng) < game_ft:
-                                    points += 1.0
-                                if uniform(my_rng) < game_ft:
-                                    points += 1.0
-                                shot_done = 1
-                            elif uniform(my_rng) < game_fg2:
-                                points += 2.0
-                                if uniform(my_rng) < prob_and1:
-                                    if uniform(my_rng) < game_ft:
-                                        points += 1.0
-                                shot_done = 1
-                            elif uniform(my_rng) >= adj_oreb_pct:
-                                shot_done = 1
-                    poss = poss - 1
+            # An offensive rebound retries the same shot process, giving a
+            # geometric series with multiplier retry_probability.
+            retry_probability = adj_oreb_pct * (
+                prob_3pt * (1.0 - prob_sf3) * (1.0 - game_fg3)
+                + (1.0 - prob_3pt) * (1.0 - prob_sf2)
+                * (1.0 - game_fg2))
+            points = <double>c_pace * (
+                prob_ns_ft * 2.0 * game_ft
+                + prob_initial_shot * shot_reward
+                / (1.0 - retry_probability))
 
             total_points += points
 
     free(rng_states)
     sim_points = total_points / <double>iterations
 
-    # The event simulation already generates a realistic single-game total.
+    # The simulation already generates a realistic single-game total.
     # Do not pull it back to season/matchup average scoring; that made low-
     # scoring Finals-style games drift too high.  Plus-minus is used only as a
     # small, clamped lineup-strength signal to help the two independent team

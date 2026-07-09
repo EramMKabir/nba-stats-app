@@ -9,14 +9,25 @@ import sys
 # is installed we add the include/lib paths and the -Xpreprocessor -fopenmp
 # flags that Apple's compiler driver requires.  On Linux the same -fopenmp
 # flag works out of the box with GCC.
-omp_prefix = "/opt/homebrew/opt/libomp"
+omp_prefix = None
 omp_compile_args = []
 omp_link_args = []
 omp_include_dirs = []
 omp_library_dirs = []
 
 if sys.platform == "darwin":
-    if os.path.isdir(omp_prefix):
+    omp_prefix_candidates = [
+        os.environ.get("LIBOMP_PREFIX"),
+        "/opt/homebrew/opt/libomp",
+        "/usr/local/opt/libomp",
+    ]
+    omp_prefix = next(
+        (path for path in omp_prefix_candidates
+         if path and os.path.isfile(os.path.join(path, "include", "omp.h"))),
+        None,
+    )
+
+    if omp_prefix is not None:
         omp_compile_args = ["-Xpreprocessor", "-fopenmp"]
         omp_link_args = ["-Xpreprocessor", "-fopenmp", "-lomp"]
         omp_include_dirs = [os.path.join(omp_prefix, "include")]
@@ -25,7 +36,7 @@ if sys.platform == "darwin":
     # execution — print a warning so the user knows.
     else:
         print(
-            "WARNING: libomp not found at /opt/homebrew/opt/libomp.  "
+            "WARNING: libomp was not found.  "
             "OpenMP parallelism will be DISABLED (serial fallback).  "
             "Install with:  brew install libomp"
         )
@@ -75,7 +86,7 @@ extensions = [
             "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION",
             "-Wextra",
             "-g",
-            "-O2",
+            "-O3",
         ] + omp_compile_args,
         extra_link_args=omp_link_args,
     ),
