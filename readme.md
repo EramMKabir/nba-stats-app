@@ -102,7 +102,7 @@
 
 For this app, you'll need:
 
-* Python (3.13)
+* Python (latest version is preferred)
 * npm
 * Vite
 * Cython
@@ -138,7 +138,7 @@ For this app, you'll need:
 
    ```sh
    cd nba-stats-python-backend
-   python3.13 -m venv .venv
+   python -m venv .venv
    source .venv/bin/activate
    ```
 
