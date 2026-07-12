@@ -138,7 +138,7 @@ For this app, you'll need:
 
    ```sh
    cd nba-stats-python-backend
-   python -m venv .venv
+   python3.13 -m venv .venv
    source .venv/bin/activate
    ```
 
