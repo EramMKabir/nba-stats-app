@@ -102,7 +102,7 @@
 
 For this app, you'll need:
 
-* Python (latest version is preferred)
+* Python (3.13)
 * npm
 * Vite
 * Cython
