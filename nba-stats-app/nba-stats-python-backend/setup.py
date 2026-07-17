@@ -90,6 +90,21 @@ extensions = [
         ] + omp_compile_args,
         extra_link_args=omp_link_args,
     ),
+
+    # API-specific historical aggregation and parallel weight search.
+    Extension(
+        "backtest_api",
+        ["backtest_api.pyx"],
+        include_dirs=[np.get_include()] + omp_include_dirs,
+        library_dirs=omp_library_dirs,
+        extra_compile_args=[
+            "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION",
+            "-Wextra",
+            "-g",
+            "-O3",
+        ] + omp_compile_args,
+        extra_link_args=omp_link_args,
+    ),
 ]
 
 setup(

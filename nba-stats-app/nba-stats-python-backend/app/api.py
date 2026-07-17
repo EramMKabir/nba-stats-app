@@ -59,6 +59,12 @@ from datetime import datetime
 import nba_stat_calculator
 import nba_stat_calculator_p
 import mc_sim
+from backtest_api import (
+    MODEL_WEIGHT_RECENT_GAMES,
+    calculate_matchup_inputs_and_model_weights,
+    calculate_model_weights,
+    refresh_model_weights
+)
 import get_team_wl_ratio_against_opp_team
 import asyncio
 import asyncpg
@@ -145,11 +151,15 @@ poffs_model_path = "finalized_poffs_players_model.json"
 
 refresh_interval = 1800
 
+model_weights_refresh_interval = refresh_interval
+
 pre_model = None
 
 reg_model = None
 
 poffs_model = None
+
+player_ids_to_player_hm = None
 
 model_lock = threading.Lock()
 
@@ -162,16 +172,21 @@ def load_models():
     global pre_model
     global reg_model
     global poffs_model
+    global player_ids_to_player_hm
     new_pre_model = xgb.XGBRegressor()
     new_reg_model = xgb.XGBRegressor()
     new_poffs_model = xgb.XGBRegressor()
     new_pre_model.load_model(pre_model_path)
     new_reg_model.load_model(reg_model_path)
     new_poffs_model.load_model(poffs_model_path)
+    new_player_ids_to_player_hm = (
+        nba_stat_calculator_p.player_ids_to_player()
+    )
     with model_lock:
         pre_model = new_pre_model
         reg_model = new_reg_model
         poffs_model = new_poffs_model
+        player_ids_to_player_hm = new_player_ids_to_player_hm
 
 # The following model refreshes
 # the regression models
@@ -192,6 +207,8 @@ async def lifespan(app: FastAPI):
     # needed for the pool to be accessible to the whole app.
     global nba_pool 
 
+    global player_ids_to_player_hm
+
     # Initialize a global connection pool for PostgreSQL using the connection
     # string and other parameters (at least 10 connections in the pool, at most
     # 100 connections in the pool, release all connections after 300
@@ -201,18 +218,20 @@ async def lifespan(app: FastAPI):
        
     num_conns = 10
 
+    player_ids_to_player_hm = nba_stat_calculator_p.player_ids_to_player()
+
     # The following code is used to warm up the connections for
     # the PostgreSQL database, so that quick queries can be done.
     
     async def warmup_min_conns():
 
         async with nba_pool.acquire() as cur:
-    
-            await cur.fetch("SELECT * FROM nbaplayerstatsregseason WHERE matchup LIKE 'DEN%' AND season_id = '22024' ORDER BY player_id")
 
-            await cur.fetch("SELECT * FROM nbaplayerstatspreseason WHERE matchup LIKE 'DEN%' AND season_id = '12024' ORDER BY player_id")
+            await cur.fetch("SELECT * FROM nbaplayerstatsregseason ORDER BY player_id")
 
-            await cur.fetch("SELECT * FROM nbaplayerstatspoffsseason WHERE matchup LIKE 'DEN%' AND season_id = '42024' ORDER BY player_id")
+            await cur.fetch("SELECT * FROM nbaplayerstatspreseason ORDER BY player_id")
+
+            await cur.fetch("SELECT * FROM nbaplayerstatspoffsseason ORDER BY player_id")
 
             await cur.fetch("SELECT matchup, wl FROM nbawlholderregseason WHERE matchup LIKE 'DEN%'")
 
@@ -271,6 +290,60 @@ async def lifespan(app: FastAPI):
 
     await asyncio.gather(*[warmup_min_conns() for _ in range(num_conns)])
 
+    async def update_latest_model_weights(force_refresh=False):
+        """Warm or refresh weights for the latest season of each type."""
+        season_sources = (
+            ("nbawlholderpreseason", "Pre Season"),
+            ("nbawlholderregseason", "Regular Season"),
+            ("nbawlholderpoffsseason", "Playoffs"),
+        )
+        async with nba_pool.acquire() as cur:
+            for table_name, season_type in season_sources:
+                season_id = await cur.fetchval(
+                    f"SELECT MAX(season_id) FROM {table_name} WHERE wl IS NOT NULL"
+                )
+                if season_id:
+                    start_year = int(season_id[1:])
+                    season = f"{start_year}-{str(start_year + 1)[-2:]}"
+                    updater = (
+                        refresh_model_weights
+                        if force_refresh
+                        else calculate_model_weights
+                    )
+                    await updater(
+                        cur,
+                        season,
+                        season_type,
+                        recent_games=MODEL_WEIGHT_RECENT_GAMES,
+                        min_prior_games=1
+                    )
+
+    # Initial request-time warmup.
+    await update_latest_model_weights()
+
+    # The thread only handles the interval. Async database work is submitted
+    # to the owning event loop because asyncpg pools are not cross-loop safe.
+    event_loop = asyncio.get_running_loop()
+    weights_refresh_stop = threading.Event()
+
+    def model_weights_refresher():
+        while not weights_refresh_stop.wait(model_weights_refresh_interval):
+            refresh_future = asyncio.run_coroutine_threadsafe(
+                update_latest_model_weights(force_refresh=True),
+                event_loop,
+            )
+            try:
+                refresh_future.result()
+            except Exception as error:
+                print(f"Model weight refresh failed: {error}")
+
+    weights_refresh_thread = threading.Thread(
+        target=model_weights_refresher,
+        daemon=True,
+        name="model-weights-refresher",
+    )
+    weights_refresh_thread.start()
+
     # load regression models for use in calculating
     # team points in a matchup
 
@@ -283,6 +356,8 @@ async def lifespan(app: FastAPI):
     t.start()
 
     yield #allow connections to be used in entire app
+
+    weights_refresh_stop.set()
 
     await nba_pool.close() #close pool upon deceased lifespan
 
@@ -513,23 +588,19 @@ def convert_name_nums_to_strings(player_names_list: list[list[list[int]]], num_i
 
 def query_last_game_string(param: str):
 
-    query_string = "SELECT minutes, points, \
-    field_goals_made, field_goals_attempted, field_goals_percentage, \
-    field_goal_threes_made, field_goal_threes_attempted, \
-    field_goal_threes_percentage, free_throws_made, free_throws_attempted, \
-    free_throws_percentage, offensive_rebounds, defensive_rebounds, rebounds, \
-    assists, turnovers, steals, blocks, personal_fouls, plus_minus, player_id \
-    FROM nbaplayerstats" + param + " \
-    WHERE LEAST(home_team, away_team) = LEAST($1, $2) \
-    AND GREATEST(home_team, away_team) = GREATEST($1, $2) \
-    AND game_date = ( \
-    SELECT MAX(game_date) \
-    FROM nbaplayerstats" + param + " \
-    WHERE LEAST(home_team, away_team) = LEAST($1, $2) \
-    AND GREATEST(home_team, away_team) = GREATEST($1, $2) \
-    ) \
-    ORDER BY season_id DESC, game_date DESC, matchup DESC, points DESC\
-    "
+    query_string = "SELECT minutes, points, field_goals_made, \
+    field_goals_attempted, field_goals_percentage, field_goal_threes_made, \
+    field_goal_threes_attempted, field_goal_threes_percentage, \
+    free_throws_made, free_throws_attempted, free_throws_percentage, \
+    offensive_rebounds, defensive_rebounds, rebounds, assists, turnovers, \
+    steals, blocks, personal_fouls, plus_minus, player_id \
+    FROM nbaplayerstats" + param + " WHERE LEAST(home_team, away_team) = \
+    LEAST($1, $2) AND GREATEST(home_team, away_team) = GREATEST($1, $2) \
+    AND (season_id, game_date) = (SELECT season_id, game_date \
+    FROM nbaplayerstats" + param + " WHERE LEAST(home_team, away_team) = \
+    LEAST($1, $2) AND GREATEST(home_team, away_team) = GREATEST($1, $2) \
+    ORDER BY season_id DESC, game_date DESC LIMIT 1) ORDER BY season_id DESC, \
+    game_date DESC, matchup DESC, points DESC"
 
     return query_string
 
@@ -811,16 +882,35 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
     params.recentGames = int(params.recentGames)
 
     async with nba_pool.acquire() as cur:
-   
-        stat_arrays = await nba_stat_calculator_p.calculate_player_stats_arrays(params.team, 
-                                                                                params.season, 
-                                                                                params.seasonType, 
-                                                                                params.opposingTeam, 
-                                                                                cur)
+
+        async def calculate_model_inputs():
+            async with nba_pool.acquire() as model_cur:
+                weights = await calculate_matchup_inputs_and_model_weights(model_cur, params.season, params.seasonType, params.team, params.opposingTeam, recent_games=params.recentGames)
+                return weights
+
+        stat_arrays, players_from_last_game, model_result = await asyncio.gather(
+            nba_stat_calculator_p.calculate_player_stats_arrays(
+                params.team,
+                params.season,
+                params.seasonType,
+                params.opposingTeam,
+                cur,
+            ),
+            get_last_game_stats(params),
+            calculate_model_inputs(),
+        )
 
         if isinstance(stat_arrays[0], int):
 
             return stat_arrays[0]
+
+        team_model_inputs, model_weights = model_result
+        
+        error_code = 2
+        
+        if isinstance(team_model_inputs, int) and isinstance(model_weights, int):
+        
+            return error_code
         
         calculated_stats_lists = nba_stat_calculator.calculate_matchup_stats(params.team, 
                                                                              params.season, 
@@ -855,8 +945,6 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
 
         opp_player_names_ = convert_name_nums_to_strings(opp_player_names_list)
 
-        players_from_last_game = await get_last_game_stats(params)
-
         indices_of_relevant_players = [i for i in range(len(player_names_)) 
                                        if player_names_[i] in players_from_last_game]
 
@@ -884,24 +972,24 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         np_player_stats_list = np.nansum(np_player_stats_list, axis=0)
 
         np_opp_player_stats_list = np.nansum(np_opp_player_stats_list, axis=0)
-
-        pace_team, pace_opp = await get_paces(params)
-
-        if isinstance(pace_team, int):
-
-            return pace_team
-
-        pace_team = [sum(pace_team)/len(pace_team)]
         
-        pace_opp = [sum(pace_opp)/len(pace_opp)]
+        team_pts = mc_sim.run_monte_carlo_simulation(
+            team_model_inputs.team_stats,
+            team_model_inputs.opponent_stats,
+            team_model_inputs.pace,
+            team_model_inputs.league_averages,
+            team_model_inputs.opponent_defense,
+            model_weights=model_weights
+        )
 
-        league_averages = await get_league_averages(params)
-
-        four_factors_t, four_factors_ot = await get_four_factors(params)
-
-        team_pts = mc_sim.run_monte_carlo_simulation(np_player_stats_list, np_opp_player_stats_list, pace_team[0], league_averages, four_factors_ot)
-
-        opp_team_pts = mc_sim.run_monte_carlo_simulation(np_opp_player_stats_list, np_player_stats_list, pace_opp[0], league_averages, four_factors_t)
+        opp_team_pts = mc_sim.run_monte_carlo_simulation(
+            team_model_inputs.opponent_stats,
+            team_model_inputs.team_stats,
+            team_model_inputs.pace,
+            team_model_inputs.league_averages,
+            team_model_inputs.team_defense,
+            model_weights=model_weights
+        )
 
         num_stats = 20
 
@@ -1029,8 +1117,6 @@ async def get_last_game_stats(params: Annotated[matchupCalculatorParams, Query()
         last_game_players_stats = await cur.fetch(last_game_query_string, params.team, params.opposingTeam)
         
         last_game_players_stats = [dict(row) for row in last_game_players_stats]
-
-        player_ids_to_player_hm = nba_stat_calculator_p.player_ids_to_player()
 
         last_game_players_stats = {player_ids_to_player_hm[row["player_id"]]: row for row in last_game_players_stats if row["player_id"] in player_ids_to_player_hm}
 

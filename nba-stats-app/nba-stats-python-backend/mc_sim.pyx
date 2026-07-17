@@ -136,7 +136,8 @@ cdef inline double clamp(double v, double lo, double hi) noexcept nogil:
 # ═══════════════════════════════════════════════════════════════════════════
 def run_monte_carlo_simulation(off_team_stats, def_team_stats,
                                pace, league_avgs, def_allowed_stats=None,
-                               int iterations=10000):
+                               int iterations=10000, model_weights=None,
+                               unsigned long long random_seed=0):
     """Run Monte Carlo simulation to estimate team scoring.
 
     Parameters
@@ -149,6 +150,13 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
                                   eFG% allowed, TOV forced rate,
                                   opponent FT rate allowed, DREB%
     iterations     : int          Number of simulation iterations
+    model_weights  : array-like   Optional weights in this order:
+                                  shot disruption, forced turnovers,
+                                  defensive fouls, allowed FT rate,
+                                  shot quality, allowed eFG%, DREB%,
+                                  lineup plus-minus, score scale,
+                                  score intercept
+    random_seed    : int          Non-zero seed for reproducible results
 
     Returns
     -------
@@ -162,7 +170,11 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     cdef double[::1] allowed = np.ascontiguousarray(
         [] if def_allowed_stats is None else def_allowed_stats,
         dtype=np.float64)
+    cdef double[::1] weights = np.ascontiguousarray(
+        [] if model_weights is None else model_weights,
+        dtype=np.float64)
     cdef Py_ssize_t allowed_len = allowed.shape[0]
+    cdef Py_ssize_t weights_len = weights.shape[0]
     cdef int c_pace = <int>round(pace)
 
     if iterations <= 0:
@@ -197,6 +209,11 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     cdef double def_foul_factor, shot_quality_factor
     cdef double efg_allowed_factor, tov_allowed_factor, dreb_allowed_factor
     cdef double adj_fg2_pct, adj_fg3_pct, adj_tov_pct, adj_oreb_pct
+    cdef double shot_disruption_weight, forced_tov_weight
+    cdef double defensive_foul_weight, allowed_ft_rate_weight
+    cdef double shot_quality_weight, allowed_efg_weight
+    cdef double dreb_weight, lineup_plus_minus_weight
+    cdef double score_scale, score_intercept
 
     # Possession outcome probabilities
     cdef double prob_3pt, ft_rate, prob_ns_ft, prob_and1
@@ -214,6 +231,19 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     cdef double three_point_reward, two_point_reward
     cdef double shot_reward, retry_probability
     cdef double total_points = 0.0
+
+    # These defaults preserve the production model. The backtest harness can
+    # override them without requiring a recompile for every trial.
+    shot_disruption_weight = weights[0] if weights_len > 0 else 0.35
+    forced_tov_weight = weights[1] if weights_len > 1 else 0.50
+    defensive_foul_weight = weights[2] if weights_len > 2 else 0.10
+    allowed_ft_rate_weight = weights[3] if weights_len > 3 else 0.50
+    shot_quality_weight = weights[4] if weights_len > 4 else 0.08
+    allowed_efg_weight = weights[5] if weights_len > 5 else 0.45
+    dreb_weight = weights[6] if weights_len > 6 else 0.60
+    lineup_plus_minus_weight = weights[7] if weights_len > 7 else 0.10
+    score_scale = weights[8] if weights_len > 8 else 1.0
+    score_intercept = weights[9] if weights_len > 9 else 0.0
 
     # ── Extract offensive stats ────────────────────────────────────────────
     off_fgm  = max(0.0, off[1])
@@ -296,23 +326,35 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     def_disruption  = (def_stl + def_blk) / def_fga if def_fga > 0.0 else 0.0
     lg_disruption   = 0.12
     disruption_factor = def_disruption / lg_disruption if lg_disruption > 0.0 else 1.0
-    shot_disruption_factor = clamp(1.0 + 0.35 * (disruption_factor - 1.0), 0.90, 1.10)
+    shot_disruption_factor = clamp(
+        1.0 + shot_disruption_weight * (disruption_factor - 1.0),
+        0.90, 1.10)
 
     tov_allowed_factor = def_tov_forced_pct / lg_tov_pct if lg_tov_pct > 0.0 else 1.0
-    tov_allowed_factor = clamp(1.0 + 0.50 * (tov_allowed_factor - 1.0), 0.90, 1.10)
+    tov_allowed_factor = clamp(
+        1.0 + forced_tov_weight * (tov_allowed_factor - 1.0),
+        0.90, 1.10)
     disruption_factor = clamp(shot_disruption_factor * tov_allowed_factor, 0.88, 1.14)
 
     def_foul_factor = def_pf / 18.5 if def_pf > 0.0 else 1.0
-    def_foul_factor = clamp(1.0 + 0.10 * (def_foul_factor - 1.0), 0.96, 1.04)
+    def_foul_factor = clamp(
+        1.0 + defensive_foul_weight * (def_foul_factor - 1.0),
+        0.96, 1.04)
     def_foul_factor = def_foul_factor * (
         def_fta_rate_allowed / lg_fta_rate if lg_fta_rate > 0.0 else 1.0)
-    def_foul_factor = clamp(1.0 + 0.50 * (def_foul_factor - 1.0), 0.88, 1.12)
+    def_foul_factor = clamp(
+        1.0 + allowed_ft_rate_weight * (def_foul_factor - 1.0),
+        0.88, 1.12)
 
     shot_quality_factor = off_ast / off_fgm if off_fgm > 0.0 else 0.60
-    shot_quality_factor = clamp(1.0 + 0.08 * (shot_quality_factor - 0.60), 0.96, 1.04)
+    shot_quality_factor = clamp(
+        1.0 + shot_quality_weight * (shot_quality_factor - 0.60),
+        0.96, 1.04)
 
     efg_allowed_factor = def_efg_allowed / lg_efg_pct if lg_efg_pct > 0.0 else 1.0
-    efg_allowed_factor = clamp(1.0 + 0.45 * (efg_allowed_factor - 1.0), 0.93, 1.07)
+    efg_allowed_factor = clamp(
+        1.0 + allowed_efg_weight * (efg_allowed_factor - 1.0),
+        0.93, 1.07)
 
     # ── Adjusted rates ─────────────────────────────────────────────────────
     adj_fg2_pct = off_fg2_pct * shot_quality_factor * efg_allowed_factor / shot_disruption_factor
@@ -320,7 +362,9 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     adj_tov_pct = off_tov_pct * disruption_factor
 
     dreb_allowed_factor = (1.0 - def_dreb_pct) / (1.0 - lg_oreb_pct) if (1.0 - lg_oreb_pct) > 0.0 else 1.0
-    dreb_allowed_factor = clamp(1.0 + 0.60 * (dreb_allowed_factor - 1.0), 0.70, 1.10)
+    dreb_allowed_factor = clamp(
+        1.0 + dreb_weight * (dreb_allowed_factor - 1.0),
+        0.70, 1.10)
 
     if lg_oreb_pct > 0.0:
         adj_oreb_pct = off_oreb_pct * dreb_allowed_factor
@@ -378,11 +422,18 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
 
     # Each thread gets a unique seed drawn from the already-seeded libc RNG
     cdef int j
+    cdef unsigned long long base_seed
+    if random_seed != 0:
+        base_seed = random_seed
+    else:
+        base_seed = (<unsigned long long>rand()
+                     | (<unsigned long long>rand() << 15)
+                     | (<unsigned long long>rand() << 30)
+                     | (<unsigned long long>rand() << 45))
     for j in range(nthreads):
-        rng_init(&rng_states[j], <unsigned long long>rand()
-                 | (<unsigned long long>rand() << 15)
-                 | (<unsigned long long>rand() << 30)
-                 | (<unsigned long long>rand() << 45))
+        rng_init(&rng_states[j], base_seed
+                 + <unsigned long long>j
+                 * <unsigned long long>0x9E3779B97F4A7C15)
 
     cdef RngState *my_rng
     cdef int tid
@@ -451,8 +502,11 @@ def run_monte_carlo_simulation(off_team_stats, def_team_stats,
     # small, clamped lineup-strength signal to help the two independent team
     # calls preserve the expected winner.
     lineup_strength_adjustment = clamp(
-        0.10 * (off_plus_minus - def_plus_minus), -3.5, 3.5)
-    sim_points = sim_points + lineup_strength_adjustment
+        lineup_plus_minus_weight * (off_plus_minus - def_plus_minus),
+        -3.5, 3.5)
+    sim_points = score_scale * (
+        sim_points + lineup_strength_adjustment
+    ) + score_intercept
     if sim_points < 0.0:
         sim_points = 0.0
 
