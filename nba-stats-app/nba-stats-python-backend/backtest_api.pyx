@@ -354,13 +354,16 @@ async def calculate_matchup_team_inputs(
     return build_matchup_team_inputs(games, team, opponent, recent_games)
 
 
-cdef tuple _evaluate_candidate(
+cdef void _evaluate_candidate(
     object backtest,
     object examples,
     object adjustment_weights,
     int iterations,
     int seed,
-):
+    double* score,
+    double* scale,
+    double* intercept,
+) except *:
     cdef tuple raw_weights = tuple(adjustment_weights) + (1.0, 0.0)
     cdef object raw_predictions = backtest.predict_examples(
         examples, raw_weights, iterations, seed
@@ -369,8 +372,10 @@ cdef tuple _evaluate_candidate(
     cdef object predictions = backtest.apply_score_calibration(
         raw_predictions, calibration[0], calibration[1]
     )
-    cdef double mae = backtest.calculate_metrics(predictions).score_mae
-    return mae, calibration[0], calibration[1]
+
+    score[0] = backtest.calculate_metrics(predictions).score_mae
+    scale[0] = calibration[0]
+    intercept[0] = calibration[1]
 
 
 def tune_model_weights_parallel(
@@ -389,7 +394,6 @@ def tune_model_weights_parallel(
     cdef double[::1] scores
     cdef double[::1] scales
     cdef double[::1] intercepts
-    cdef object result
 
     if trials < 0:
         raise ValueError("trials cannot be negative")
@@ -412,12 +416,16 @@ def tune_model_weights_parallel(
             count, schedule="dynamic", use_threads_if=count > 1
         ):
             with gil:
-                result = _evaluate_candidate(
-                    backtest, examples, candidates[i], iterations, seed
+                _evaluate_candidate(
+                    backtest,
+                    examples,
+                    candidates[i],
+                    iterations,
+                    seed,
+                    &scores[i],
+                    &scales[i],
+                    &intercepts[i],
                 )
-                scores[i] = result[0]
-                scales[i] = result[1]
-                intercepts[i] = result[2]
 
     best_index = 0
     for i in range(1, count):
