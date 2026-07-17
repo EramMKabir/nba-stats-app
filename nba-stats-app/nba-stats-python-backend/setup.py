@@ -102,6 +102,7 @@ extensions = [
             "-Wextra",
             "-g",
             "-O3",
+            "-Wno-maybe-uninitialized",
         ] + omp_compile_args,
         extra_link_args=omp_link_args,
     ),
