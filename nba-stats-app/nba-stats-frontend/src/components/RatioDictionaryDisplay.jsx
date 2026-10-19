@@ -7,10 +7,10 @@ Function: To display Dictionary values from a ratio dictionary as HTML.
 Inputs:
 
 ratioDict: A Dictionary containing a string with who won a matchup as key,
-      and a List containing wins for both teams in a matchup.
+           and a List containing wins for both teams in a matchup.
 
 teamStatsDictionary: A Dictionary containing team abbreviations as keys, and
-            player stats dictionaries as values.
+                     player stats dictionaries as values.
 
 teamPoints: An integer representing the points for a team in a matchup.
 
@@ -22,9 +22,9 @@ Lines of HTML displaying who won the matchup,
 the points for each team in the matchup, and
 historical wins and losses for the matchup
 
-Time complexity: O(n), where n is the number of players on a team
+Time complexity: O(1), since the ratioDict is a fixed-size dictionary
 
-Space complexity: O(n)
+Space complexity: O(1)
 
 #################################################################################
 # Date modified              Modifier             What was modified             #
@@ -72,14 +72,9 @@ const RatioDictionaryDisplay = ({ ratioDict, teamStatsDictionary, teamPoints, op
     };
 
     /* 
-    teamDataKeys is an array of the 
-    team abbreviations in the 
-    teamStatsDictionary. This is 
-    used to determine the 
-    winning team and to 
-    display the points 
-    for each team in 
-    the matchup.
+    teamStatsDictionaryKeys is used to
+    get the team and opposing team
+    names.
     */
 
     const teamStatsDictionaryKeys = Object.keys(teamStatsDictionary);
@@ -107,7 +102,9 @@ const RatioDictionaryDisplay = ({ ratioDict, teamStatsDictionary, teamPoints, op
     the points for each team in the matchup.
     */
 
-    const ptsString = `${team}:${teamPoints} PTS, ${oppTeam}:${oppTeamPoints} PTS`;
+    const displayTeamPoints = Number(teamPoints).toFixed(1);
+    const displayOppTeamPoints = Number(oppTeamPoints).toFixed(1);
+    const ptsString = `${team}:${displayTeamPoints} PTS, ${oppTeam}:${displayOppTeamPoints} PTS`;
     
     /*
     We just index into the RatioDict,
@@ -125,17 +122,31 @@ const RatioDictionaryDisplay = ({ ratioDict, teamStatsDictionary, teamPoints, op
     */
 
     return (
-      <React.Fragment key="ratio-dict-display">
-        <h1>Projected Winning Team: {winningTeam}</h1>
-        <h2>{ptsString}</h2>
-        <div>
+      <div className="matchup-summary" key="ratio-dict-display">
+        <div className="winner-card">
+          <span className="summary-label">Projected edge</span>
+          <strong>{winningTeam}</strong>
+          <small>Projected winner</small>
+        </div>
+        <div className="score-card">
+          <span className="summary-label">Model score</span>
+          <div className="score-line">
+            <div><b>{team}</b><strong>{displayTeamPoints}</strong></div>
+            <i>—</i>
+            <div><b>{oppTeam}</b><strong>{displayOppTeamPoints}</strong></div>
+          </div>
+          <small>{ptsString}</small>
+        </div>
+        <div className="history-card">
+          <span className="summary-label">Historical signal</span>
           {Object.entries(ratioDict).map(([key, value]) => (
-            <div key={key}>
-              <strong>{key}, {(value[0]).toString() + '-' + (value[1]).toString()}</strong>
+            <div className="history-line" key={key}>
+              <span>{key}</span>
+              <strong>{(value[0]).toString() + '-' + (value[1]).toString()}</strong>
             </div>
           ))}
         </div>
-      </React.Fragment>
+      </div>
     );
   };
 

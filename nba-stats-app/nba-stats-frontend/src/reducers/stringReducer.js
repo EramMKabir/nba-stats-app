@@ -58,6 +58,8 @@ const stringSlice = createSlice({
         seasonMInput: '',
         seasonTypeMInput: '',
         opposingTeamMInput: '',
+        gameDate: '',
+        venue: "auto"
     },
     reducers: {
         setPlayerName(state, action) {
@@ -197,6 +199,18 @@ const stringSlice = createSlice({
                 ...state,
                 opposingTeamMInput: action.payload
             }
+        },
+        setGameDate(state, action) {
+            return {
+                ...state,
+                gameDate: action.payload
+            }
+        },
+        setVenue(state, action) {
+            return {
+                ...state,
+                venue: action.payload
+            }
         }
     }
 });
@@ -224,5 +238,7 @@ export const { setPlayerName,
                setSeasonMInput,
                setSeasonTypeMInput,
                setOpposingTeamMInput,
+               setGameDate,
+               setVenue,
             } = stringSlice.actions;
 export default stringSlice.reducer;

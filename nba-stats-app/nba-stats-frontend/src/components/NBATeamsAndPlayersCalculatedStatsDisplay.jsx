@@ -40,6 +40,8 @@ import React from "react";
 
 const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGameStatsDictionary, injuredPlayersDictionary }) => {
     
+    const isDesktopOrLaptop = useMediaQuery({ minWidth: 601 });
+    
     /* 
     Return if teamStatsDictionary is empty.
     This is needed since the
@@ -103,13 +105,11 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     points scored.
     */
 
-    const isDesktopOrLaptop = useMediaQuery({ minWidth: 601 });
-
     const dictKeys = Object.keys(teamStatsDictionary);
 
     const alteredData = {...teamStatsDictionary, 
-                            firstTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[0]]).filter(([player, stats]) => !injuredPlayersDictionary[player])), 
-                            secondTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[1]]).filter(([player, stats]) => !injuredPlayersDictionary[player]))};
+                            firstTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[0]]).filter(([player]) => !injuredPlayersDictionary[player])), 
+                            secondTeam: Object.fromEntries(Object.entries(teamStatsDictionary[dictKeys[1]]).filter(([player]) => !injuredPlayersDictionary[player]))};
 
     const orderedHeaders = ["MIN", 
                             "FGM", 
@@ -159,6 +159,13 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     
     const sortedDataSecondTeam = Object.entries(alteredData.secondTeam).sort(([, stats], [, secondStats]) => secondStats.PTS - stats.PTS);
     
+    /*
+    The following are reusable functions
+    to make the row data for the HTML
+    tables that this component will
+    ultimately create.
+    */
+
     const getOrderedHeadersPlusTeamStats = (sortedData) => {
         return sortedData.map(([player, stats]) => {
             const orderedStats = [`NAME: ${player}`];
@@ -255,7 +262,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
               <div className="tableStats">
                 <h1 className="header">{dictKeys[0]}</h1>
                 <div className="table-wrapper">
-                  <table className="table">
+                  <table className="table calculated-stats-table">
                   <tbody>
                   {orderedHeadersPlusFirstTeamStats.map((playerStats, index) => (
                     <React.Fragment key={playerStats[0]}>
@@ -277,7 +284,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                 </div>
                 <h1 className="header">{dictKeys[1]}</h1>
                 <div className="table-wrapper">
-                  <table className="table">
+                  <table className="table calculated-stats-table">
                   <tbody>
                   {orderedHeadersPlusSecondTeamStats.map((playerStats, index) => (
                     <React.Fragment key={playerStats[0]}>
@@ -304,12 +311,12 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
     const desktopCalculatedStatsView = () => {
         return (<div className="tableStats">
                 <h1 className="header">{dictKeys[0]}</h1>
-                <table className="table">
+                <table className="table calculated-stats-table">
                   <tbody>
                     <tr>
                       <th>NAME</th>
                       {
-                        orderedHeaders.map((statNames, index) => (
+                        orderedHeaders.map((statNames) => (
                           <th key = {statNames}>{statNames}</th>
                         ))
                       }
@@ -319,7 +326,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                         <React.Fragment key={player}>
                           <tr key = {player}>
                             <td key = {player}>{player}</td>
-                            {orderedHeaders.map((statNames, index) => (
+                            {orderedHeaders.map((statNames) => (
                             <td key = {`${player}-${statNames}`}>{statNames === "PLUS_MINUS" ? stats[statNames] : Math.max(0, stats[statNames])}</td>
                             ))}
                           </tr>
@@ -339,12 +346,12 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                   </tbody>
                 </table>
                 <h1 className="header">{dictKeys[1]}</h1>
-                <table className="table">
+                <table className="table calculated-stats-table">
                   <tbody>
                     <tr>
                       <th>NAME</th>
                       {
-                        orderedHeaders.map((statNames, index) => (
+                        orderedHeaders.map((statNames) => (
                           <th key={statNames}>{statNames}</th>
                         ))
                       }
@@ -354,7 +361,7 @@ const NBATeamsAndPlayersCalculatedStatsDisplay = ({ teamStatsDictionary, lastGam
                         <React.Fragment key={player}>
                           <tr key = {player}>
                             <td key = {player}>{player}</td>
-                            {orderedHeaders.map((statNames, index) => (
+                            {orderedHeaders.map((statNames) => (
                             <td key = {`${player}-${statNames}`}>{statNames === "PLUS_MINUS" ? stats[statNames] : Math.max(0, stats[statNames])}</td>
                             ))}
                           </tr>

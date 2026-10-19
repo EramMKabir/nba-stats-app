@@ -30,4 +30,24 @@ export default [
       ],
     },
   },
+
+  {
+    files: [
+      "tests/**/*.js",
+      "playwright.config.js",
+      "vite.config.js",
+    ],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      "no-unused-vars": ["error", { varsIgnorePattern: "^[A-Z_]" }],
+    },
+  },
+
 ];

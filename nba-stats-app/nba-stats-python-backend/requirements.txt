@@ -4,7 +4,6 @@ argon2-cffi
 argon2-cffi-bindings
 async-timeout
 asyncpg
-Authlib
 certifi
 cffi
 charset-normalizer
@@ -15,9 +14,10 @@ Cython
 dnspython
 exceptiongroup
 fastapi
+google-auth
 h11
 httpcore
-httpx
+httpx2
 idna
 importlib_metadata
 itsdangerous

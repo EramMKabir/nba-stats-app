@@ -12,23 +12,23 @@
 
 # Time complexity: Variable. At best, it is O(1), for when
 # there are no rows for nbastatcalculations and nbaplusminus.
-# The worst and most likely average case is O(n+m+q+r+e+v+z+(i*j+x*y)).
+# The worst and most likely average case is O(n+m+q+r+e+v+z+u+p+k+(i*j+x*y)).
 
-# - n, m, q, r, e, v and z are the rows of the queries of the database for 
+# - n, m, q, r, e, v, z, u, p, and k are the rows of the queries of the database for 
 # the get_matchup_calculated_stats function of nba_stat_calculator.py.
 
-# - i is the number of player dataframes and j is the number of rows
-# within the dataframes.
+# - i is the number of player arrays and j is the number of rows
+# within the arrays.
 
-# - x is the number of opposing player dataframes and y is the number of rows
-# within the dataframes.
+# - x is the number of opposing player arrays and y is the number of rows
+# within the arrays.
 
 # This is slightly misleading, if I am being honest. The actual time 
 # complexity, when only considering the biggest time sinks of the algorithm,
 # is O(max(i*j, x*y)), so basically quadratic time complexity.
 
 # Space complexity: Same as the time complexity. At best, O(1) space is used.
-# At worst, O(n+m+q+r+e+v+z+(i*j+x*y)) space is used. 
+# At worst, O(n+m+q+r+e+v+z+u+p+k+(i*j+x*y)) space is used. 
 
 # Again, this is slightly misleading. The space boils down to O(max(i*j, x*y)).
 # That is the part of the algorithm that takes up the most space.
@@ -36,29 +36,32 @@
 #################################################################################
 # Date modified              Modifier             What was modified             #
 # 06/28/2025                 Eram Kabir           Initial Development           #
-# 09/15/2025                 Eram Kabir           Finalized V1.0    
-#
-# 11/02/2025                 Eram Kabir           Finalized V2.0
-#
+# 09/15/2025                 Eram Kabir           Finalized V1.0                #
+# 11/02/2025                 Eram Kabir           Finalized V2.0                #                                                                               
 #################################################################################
 
 # Libraries
 
-from fastapi import Depends, Header, Request, Query, FastAPI, HTTPException, status
+from fastapi import Depends, Header, Query, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
-from authlib.integrations.starlette_client import OAuth
-from starlette.middleware.sessions import SessionMiddleware
+from google.auth import exceptions as google_auth_exceptions
+from google.auth.transport.requests import Request as GoogleRequest
+from google.oauth2 import id_token as google_id_token
 from pydantic import BaseModel
-from typing import Annotated, Union
+from typing import Annotated, Literal, Union
 from fastapi.responses import JSONResponse, RedirectResponse
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from pkce import generate_pkce
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 import nba_stat_calculator
 import nba_stat_calculator_p
 import mc_sim
+from backtest_mc_sim import (
+    SEASON_TYPES, apply_context, derive_season_id, normalize_season_type,
+    rest_difference_for_dates,
+)
 from backtest_api import (
     MODEL_WEIGHT_RECENT_GAMES,
     calculate_matchup_inputs_and_model_weights,
@@ -74,7 +77,7 @@ import os
 import time
 import secrets
 import redis
-import httpx
+import httpx2 as httpx
 import numpy as np
 import xgboost as xgb
 import threading
@@ -102,8 +105,6 @@ google_client_id = os.getenv("GOOGLE_CLIENT_ID")
 
 google_client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
 
-allowed_provider = os.getenv("ALLOWED_PROVIDER")
-
 oauth_authorize_url = os.getenv("OAUTH_AUTHORIZE_URL")
 
 oauth_token_url = os.getenv("OAUTH_TOKEN_URL")
@@ -114,24 +115,9 @@ frontend_url = os.getenv("FRONTEND_URL")
 
 redis_client = redis.Redis.from_url(os.getenv("REDIS_URL"))
 
-oauth_server_url = os.getenv("OAUTH_SERVER_URL")
-
 code_challenge_method = os.getenv("CODE_CHALLENGE_METHOD")
 
 access_token_ttl_seconds = int(os.getenv("ACCESS_TOKEN_TTL_SECONDS", "600"))
-
-oauth = OAuth() #Google login method
-
-# Initialize OAuth with Google Cloud credentials and links
-oauth.register(
-    name=allowed_provider,
-    client_id=google_client_id,
-    client_secret=google_client_secret,
-    access_token_url = oauth_token_url,
-    authorize_url = oauth_authorize_url,
-    server_metadata_url=oauth_server_url,
-    client_kwargs={"scope": "openid email profile"}
-)
 
 # The following code initializes variables for
 # three regression models used to
@@ -215,10 +201,10 @@ async def lifespan(app: FastAPI):
     # seconds).
 
     nba_pool = await asyncpg.create_pool(dsn=connection_string, min_size=10, max_size=100, max_inactive_connection_lifetime=300)
-       
-    num_conns = 10
 
     player_ids_to_player_hm = nba_stat_calculator_p.player_ids_to_player()
+
+    num_conns = 10
 
     # The following code is used to warm up the connections for
     # the PostgreSQL database, so that quick queries can be done.
@@ -233,11 +219,11 @@ async def lifespan(app: FastAPI):
 
             await cur.fetch("SELECT * FROM nbaplayerstatspoffsseason ORDER BY player_id")
 
-            await cur.fetch("SELECT matchup, wl FROM nbawlholderregseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderregseason")
 
-            await cur.fetch("SELECT matchup, wl FROM nbawlholderpreseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderpreseason")
 
-            await cur.fetch("SELECT matchup, wl FROM nbawlholderpoffsseason WHERE matchup LIKE 'DEN%'")
+            await cur.fetch("SELECT matchup, wl FROM nbawlholderpoffsseason")
 
             await cur.fetch("SELECT player_name FROM nbaplayers ORDER BY player_name ASC")
 
@@ -250,7 +236,7 @@ async def lifespan(app: FastAPI):
             await cur.fetch("SELECT first_team_abbreviation, second_team_abbreviation FROM upcominggames")
 
             await cur.fetch("SELECT * FROM injurednbaplayers")
-    
+
             await cur.fetch("SELECT team_abbreviation, starter FROM nbastarters")
 
             await cur.fetch("SELECT nff.opp_efg_pct, nff.opp_tov_pct, nff.opp_fta_rate, 1-nff.opp_oreb_pct AS dreb_pct FROM nbafourfactors nff \
@@ -288,38 +274,63 @@ async def lifespan(app: FastAPI):
                                 WHERE n2.season_id = '42024' AND n1.team_tricode = 'NYK' \
                                 AND n2.team_abbreviation = 'SAS'")
 
-    await asyncio.gather(*[warmup_min_conns() for _ in range(num_conns)])
-
-    async def update_latest_model_weights(force_refresh=False):
-        """Warm or refresh weights for the latest season of each type."""
-        season_sources = (
-            ("nbawlholderpreseason", "Pre Season"),
-            ("nbawlholderregseason", "Regular Season"),
-            ("nbawlholderpoffsseason", "Playoffs"),
+    async with nba_pool.acquire() as cur:
+        await cur.fetchval(
+            "SELECT pg_prewarm("
+            "'idx_reg_season_matchup_stats_cover'::regclass, 'buffer')"
         )
+        await cur.fetchval(
+            "SELECT pg_prewarm('acc_idx_reg'::regclass, 'buffer')"
+        )
+        await cur.fetchval(
+            "SELECT pg_prewarm("
+            "'idx_pre_season_matchup_stats_cover'::regclass, 'buffer')"
+        )
+        await cur.fetchval(
+            "SELECT pg_prewarm('acc_idx_pre'::regclass, 'buffer')"
+        )
+        await cur.fetchval(
+            "SELECT pg_prewarm("
+            "'idx_poffs_season_matchup_stats_cover'::regclass, 'buffer')"
+        )
+        await cur.fetchval(
+            "SELECT pg_prewarm('acc_idx_poffs'::regclass, 'buffer')"
+        )
+
+    #await asyncio.gather(*[warmup_min_conns() for _ in range(num_conns)])
+
+    # The following function and code afterwards 
+    # updates model weights for usage in Monte 
+    # Carlo sims for determining who wins a certain matchup.
+
+    async def update_model_weights(all_seasons=False, force_refresh=False):
+        season_sources = (
+            ("nbawlholderpreseason", "Pre Season", "001"),
+            ("nbawlholderregseason", "Regular Season", "002"),
+            ("nbawlholderpoffsseason", "Playoffs", "004"),
+        )
+        updater = refresh_model_weights if force_refresh else calculate_model_weights
         async with nba_pool.acquire() as cur:
-            for table_name, season_type in season_sources:
-                season_id = await cur.fetchval(
-                    f"SELECT MAX(season_id) FROM {table_name} WHERE wl IS NOT NULL"
+            for table, season_type, game_prefix in season_sources:
+                seasons = await cur.fetch(
+                    f"SELECT DISTINCT season_id FROM {table} "
+                    "WHERE wl IS NOT NULL AND LEFT(game_id, 3) = $1 "
+                    "ORDER BY season_id DESC",
+                    game_prefix,
                 )
-                if season_id:
-                    start_year = int(season_id[1:])
+                if not all_seasons:
+                    seasons = seasons[:1]
+                for row in seasons:
+                    start_year = int(row["season_id"][1:])
                     season = f"{start_year}-{str(start_year + 1)[-2:]}"
-                    updater = (
-                        refresh_model_weights
-                        if force_refresh
-                        else calculate_model_weights
-                    )
                     await updater(
-                        cur,
-                        season,
-                        season_type,
-                        recent_games=MODEL_WEIGHT_RECENT_GAMES,
-                        min_prior_games=1
+                        cur, season, season_type,
+                        recent_games=MODEL_WEIGHT_RECENT_GAMES, min_prior_games=1,
                     )
 
-    # Initial request-time warmup.
-    await update_latest_model_weights()
+    # Discover all historical seasons so changing seasons never trains on
+    # the first request. Unchanged snapshots reuse weights saved on disk.
+    await update_model_weights(all_seasons=True)
 
     # The thread only handles the interval. Async database work is submitted
     # to the owning event loop because asyncpg pools are not cross-loop safe.
@@ -329,7 +340,7 @@ async def lifespan(app: FastAPI):
     def model_weights_refresher():
         while not weights_refresh_stop.wait(model_weights_refresh_interval):
             refresh_future = asyncio.run_coroutine_threadsafe(
-                update_latest_model_weights(force_refresh=True),
+                update_model_weights(all_seasons=True, force_refresh=True),
                 event_loop,
             )
             try:
@@ -365,9 +376,8 @@ app = FastAPI(lifespan=lifespan) #Fast API initialization and startup.
 
 # Origins for backend api calls.
 
-origins = [
-    "http://localhost:5173",
-]
+origins = [origin.strip() for origin in os.getenv(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")]
 
 # Cors will be used to allow
 # cross-communication.
@@ -375,21 +385,9 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
-)
-# Session middleware will
-# be used to create and
-# keep track of a user's
-# session.
-
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=os.getenv("SESSION_SECRET"),
-    https_only=True,
-    same_site="none",
-    session_cookie="session"
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # The following classes are used to define the data types
@@ -410,6 +408,8 @@ class matchupCalculatorParams(BaseModel):
     seasonType: str
     opposingTeam: str
     recentGames: str
+    gameDate: date | None = None
+    venue: Literal["auto", "home", "away", "neutral"] = "auto"
 
 class ratioCalculatorParams(BaseModel):
     playerFullName: str
@@ -427,8 +427,6 @@ class OAuthRequest(BaseModel):
 # is processed by the corresponding backend service.
 # Otherwise, the request is not processed, and a 401
 # error code is sent back.
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def get_access_token_key(token: str) -> str:
     return f"access_token:{token}"
@@ -610,26 +608,24 @@ def query_last_game_string(param: str):
 # service below.
 
 @app.get("/oauth/login")
-async def oauth_login(request: Request):
+async def oauth_login(response_mode: Literal["redirect", "json"] = "redirect"):
     verifier, challenge = generate_pkce()
     state = secrets.token_urlsafe(32)
-    redis_client.setex(
-        f"oauth_state:{state}",
-        300,            
-        verifier
-    )
-    url = (
-        f"{oauth_authorize_url}"
-        f"?response_type=code"
-        f"&client_id={google_client_id}"
-        f"&redirect_uri={frontend_url}"
-        f"&scope=openid%20email%20profile"
-        f"&code_challenge={challenge}"
-        f"&code_challenge_method={code_challenge_method}"
-        f"&state={state}"
-    )
+    try:
+        redis_client.setex(f"oauth_state:{state}", 300, verifier)
+    except redis.RedisError:
+        raise HTTPException(status_code=503, detail="Authentication store unavailable")
 
-    return RedirectResponse(url)
+    url = str(httpx.URL(oauth_authorize_url, params={
+        "response_type": "code", "client_id": google_client_id,
+        "redirect_uri": frontend_url, "scope": "openid email profile",
+        "code_challenge": challenge, "code_challenge_method": code_challenge_method,
+        "state": state,
+    }))
+
+    headers = {"Cache-Control": "no-store"}
+    return (JSONResponse({"authorization_url": url, "state": state}, headers=headers)
+            if response_mode == "json" else RedirectResponse(url, headers=headers))
 
 # The oauth exchange service takes
 # the user's login data, verifies
@@ -639,39 +635,53 @@ async def oauth_login(request: Request):
 # the frontend. 
 
 @app.post("/oauth/exchange")
-async def exchange_code(request: Request, data: OAuthRequest):
+async def exchange_code(data: OAuthRequest):
     key = f"oauth_state:{data.state}"
-    verifier = redis_client.get(key)
+    try:
+        verifier = redis_client.getdel(key)
+    except redis.RedisError:
+        raise HTTPException(status_code=503, detail="Authentication store unavailable")
+
     if not verifier:
         return JSONResponse(content={"error": "invalid_or_expired_state"})
-    verifier = verifier.decode("utf-8")
-    redis_client.delete(key)
 
-    async with httpx.AsyncClient() as client:
-        token_resp = await client.post(
-            oauth_token_url,
-            data={
-                "grant_type": "authorization_code",
-                "code": data.code,
-                "redirect_uri": frontend_url,
-                "client_id": google_client_id,
-                "client_secret": google_client_secret,
-                "code_verifier": verifier,
-            },
-        )
-        token_data = token_resp.json()
-        userinfo_resp = await client.get(
-            oauth_userinfo_url,
-            headers={
-                "Authorization": f"Bearer {token_data['access_token']}"
-            },
-        )
-        user = userinfo_resp.json()
-    
-    username, email = user.get("name"), user.get("email")
+    verifier = verifier.decode("utf-8")
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            token_resp = await client.post(oauth_token_url, data={
+                "grant_type": "authorization_code", "code": data.code,
+                "redirect_uri": frontend_url, "client_id": google_client_id,
+                "client_secret": google_client_secret, "code_verifier": verifier,
+            })
+            token_resp.raise_for_status()
+            token_data = token_resp.json()
+            access_token, provider_id_token = token_data.get("access_token"), token_data.get("id_token")
+            if not access_token or not provider_id_token:
+                raise ValueError
+            userinfo_resp = await client.get(
+                oauth_userinfo_url, headers={"Authorization": f"Bearer {access_token}"})
+            userinfo_resp.raise_for_status()
+            user = userinfo_resp.json()
+    except (httpx.HTTPError, ValueError, AttributeError):
+        raise HTTPException(status_code=502, detail="Invalid response from OAuth provider")
+
+    try:
+        verified_user = await asyncio.to_thread(
+            google_id_token.verify_oauth2_token, provider_id_token,
+            GoogleRequest(), google_client_id)
+    except (ValueError, google_auth_exceptions.GoogleAuthError):
+        raise HTTPException(status_code=401, detail="Invalid Google identity token")
+
+    subject, email = verified_user.get("sub"), verified_user.get("email")
+    if (not isinstance(user, dict) or not subject or not email
+            or verified_user.get("email_verified") is not True
+            or user.get("sub") != subject or user.get("email") != email):
+        raise HTTPException(status_code=401, detail="Unverified Google identity")
+    username = user.get("name") or verified_user.get("name") or email
 
     session_data = {
-        "sub": user["sub"],
+        "sub": subject,
         "email": email,
         "user": username,
         "exp": int(time.time()) + access_token_ttl_seconds,
@@ -693,7 +703,8 @@ async def exchange_code(request: Request, data: OAuthRequest):
     except redis.RedisError:
         raise HTTPException(status_code=503, detail="Authentication store unavailable")
 
-    return JSONResponse(content={"token": app_token, "email": email, "user": username})
+    return JSONResponse(content={"token": app_token, "email": email, "user": username},
+                        headers={"Cache-Control": "no-store"})
 
 # This function returns a list of
 # dictionaries of all NBA player names
@@ -707,7 +718,7 @@ async def get_player_names(current_user: dict = Depends(get_current_user)):
         player_names = await cur.fetch("SELECT player_name \
                                        FROM nbaplayers \
                                        ORDER BY player_name ASC")
-    
+
         player_names = [dict(row) for row in player_names]
 
         return player_names
@@ -773,7 +784,7 @@ async def get_teams(current_user: dict = Depends(get_current_user)):
         team_names = await cur.fetch("SELECT team_abbreviation \
                                      FROM nbateamabbreviations \
                                      ORDER BY team_abbreviation ASC")
-    
+
         team_names = [dict(row) for row in team_names]
                                             
         return team_names
@@ -837,13 +848,29 @@ async def get_player_calculated_stats(params: Annotated[statCalculatorParams, Qu
 # this is not the case. If the recent games
 # parameter is not provided, it assumes all of
 # the player's games need to be considered 
-# when calculating a player's stats.
+# when calculating a player's stats. If the team
+# and opposing team are the same, a different
+# error number is returned.
+
+# The function _matchup_prediction_context is
+# then called to calculate the cutoff date
+# for which data should be used to calculate
+# matchup winners, which team has the venue,
+# and which team has had more rest.
 
 # A function from the nba_stat_calculator_p.py file
 # is then called to pull the necessary data for
 # matchup calculations. If the team_abbreviation
 # is an integer, then that means the data was not
 # found, and as such, an error is thrown.
+
+# The last game's stats are pulled using a
+# function called get_last_game_stats, and
+# the paces, league_averages and model
+# weights in general are calculated 
+# afterwards, using most of the input params 
+# and the newly created cutoff date.
+
 # Another function is then called from 
 # nba_stat_calculator.pyx to perform the
 # calculations. If the error variable returned by
@@ -852,12 +879,13 @@ async def get_player_calculated_stats(params: Annotated[statCalculatorParams, Qu
 
 # If there is no error, then points calculations
 # for both teams are performed. The data for
-# both teams are filtered and summed up, paces
-# for both teams are obtained and averaged,
-# and league averages for certain stats are
-# obtained. This data is fed into the mc_sim
+# both teams are filtered and summed up. 
+# This data is fed into the mc_sim
 # function to calculate the points for both
-# teams.
+# teams. Afterwards, apply_context, a function
+# to account for team rest, venues, and model
+# weights when considering scores, is ran to
+# adjust the scores.
 
 # Then, the results returned by the 
 # nba_stat_calculator function are compressed 
@@ -873,19 +901,81 @@ async def get_player_calculated_stats(params: Annotated[statCalculatorParams, Qu
 # once. This will be fixed later, but for now,
 # it is not a major area of concern.
 
+async def _matchup_prediction_context(connection, params):
+    """Resolve pregame cutoff and rest without using results from that date."""
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+    target = params.gameDate
+
+    def season_for_date(value):
+        start = value.year if value.month >= 7 else value.year - 1
+        return f"{start}-{str(start + 1)[-2:]}"
+
+    if target is not None and season_for_date(target) != params.season:
+        return 5, 5, 5
+    if target is None:
+        scheduled = await connection.fetchval(
+            "SELECT MIN(game_datetime)::date FROM upcominggames "
+            "WHERE LEAST(first_team_abbreviation, second_team_abbreviation) = LEAST($1, $2) "
+            "AND GREATEST(first_team_abbreviation, second_team_abbreviation) = GREATEST($1, $2) "
+            "AND game_datetime >= $3 AND game_datetime < $4",
+            params.team, params.opposingTeam,
+            datetime.combine(today, datetime.min.time()),
+            datetime.combine(today + timedelta(days=8), datetime.min.time()),
+        )
+        if scheduled is not None and season_for_date(scheduled) == params.season:
+            target = scheduled
+    cutoff = target or today
+    rest = 0.0
+    if target is not None:
+        canonical = normalize_season_type(params.seasonType)
+        suffix = SEASON_TYPES[canonical][0]
+        last_games = await connection.fetch(
+            f"SELECT team_abbreviation, MAX(game_date::date) AS last_game_date "
+            f"FROM nbawlholder{suffix} WHERE season_id = $1 AND wl IS NOT NULL "
+            "AND team_abbreviation IN ($2, $3) AND game_date::date < $4 "
+            "GROUP BY team_abbreviation",
+            derive_season_id(params.season, canonical), params.team, params.opposingTeam, cutoff,
+        )
+        dates = {row["team_abbreviation"]: row["last_game_date"] for row in last_games}
+        if target > today:
+            scheduled_games = await connection.fetch(
+                "SELECT first_team_abbreviation, second_team_abbreviation, "
+                "game_datetime::date AS game_date FROM upcominggames "
+                "WHERE (first_team_abbreviation IN ($1, $2) "
+                "OR second_team_abbreviation IN ($1, $2)) "
+                "AND game_datetime >= $3 AND game_datetime < $4",
+                params.team, params.opposingTeam,
+                datetime.combine(today, datetime.min.time()),
+                datetime.combine(target, datetime.min.time()),
+            )
+            for game in scheduled_games:
+                for team in (game["first_team_abbreviation"], game["second_team_abbreviation"]):
+                    if team in (params.team, params.opposingTeam):
+                        previous = dates.get(team)
+                        if previous is None or game["game_date"] > previous:
+                            dates[team] = game["game_date"]
+        rest = rest_difference_for_dates(target, dates.get(params.team), dates.get(params.opposingTeam))
+    # Schedule order does not identify the home team; unknown venue stays neutral.
+    venue = {"home": 1, "away": -1, "neutral": 0, "auto": 0}[params.venue]
+    return cutoff, venue, rest
+
 async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams, Query()]):
     if not params.season:
         return 3
-    elif not params.recentGames:
+    if params.team == params.opposingTeam:
+        return 4
+    if not params.recentGames:
         params.recentGames = sys.maxsize
 
     params.recentGames = int(params.recentGames)
 
     async with nba_pool.acquire() as cur:
-
+        cutoff, venue, rest = await _matchup_prediction_context(cur, params)
+        if venue == 5:
+            return venue
         async def calculate_model_inputs():
             async with nba_pool.acquire() as model_cur:
-                weights = await calculate_matchup_inputs_and_model_weights(model_cur, params.season, params.seasonType, params.team, params.opposingTeam, recent_games=params.recentGames)
+                weights = await calculate_matchup_inputs_and_model_weights(model_cur, params.season, params.seasonType, params.team, params.opposingTeam, recent_games=params.recentGames, prediction_date=cutoff)
                 return weights
 
         stat_arrays, players_from_last_game, model_result = await asyncio.gather(
@@ -909,7 +999,7 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         error_code = 2
         
         if isinstance(team_model_inputs, int) and isinstance(model_weights, int):
-        
+
             return error_code
         
         calculated_stats_lists = nba_stat_calculator.calculate_matchup_stats(params.team, 
@@ -979,7 +1069,7 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
             team_model_inputs.pace,
             team_model_inputs.league_averages,
             team_model_inputs.opponent_defense,
-            model_weights=model_weights
+            model_weights=model_weights, random_seed=20260709
         )
 
         opp_team_pts = mc_sim.run_monte_carlo_simulation(
@@ -988,7 +1078,11 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
             team_model_inputs.pace,
             team_model_inputs.league_averages,
             team_model_inputs.team_defense,
-            model_weights=model_weights
+            model_weights=model_weights, random_seed=20260709
+        )
+
+        team_pts, opp_team_pts = apply_context(
+            team_pts, opp_team_pts, model_weights, venue, rest
         )
 
         num_stats = 20
@@ -1024,7 +1118,7 @@ async def get_matchup_calculated_stats(params: Annotated[matchupCalculatorParams
         player_stats_list = [player_stats_list[index][i] 
                              for index in range(len(player_stats_list)) 
                              for i in range(num_stats)]
-        
+
         opp_team_abbreviation_list = [bytes(opp_team_abbreviation_list[0]).decode("utf8")]
         
         opp_player_names_list = convert_name_nums_to_strings(opp_player_names_list, num_iterations=num_stats)
@@ -1160,7 +1254,7 @@ async def get_starters(params: Annotated[matchupCalculatorParams, Query()]):
             starters_hm[row["team_abbreviation"]].add(row["starter"])
 
         return starters_hm
-    
+
 # This function retrieves paces of play
 # for both teams.
 
@@ -1301,10 +1395,9 @@ async def get_matchup_stats(params: Annotated[matchupCalculatorParams, Query()],
 
     matchup_stats, last_game_stats, team_pts, opp_team_pts = matchup_stats
 
-    team_pts = int(team_pts)
+    team_pts = float(team_pts)
 
-    opp_team_pts = int(opp_team_pts)
-
+    opp_team_pts = float(opp_team_pts)
     return {"matchup_stats": matchup_stats, 
             "ratio_stats": ratio_stats, 
             "last_game_stats": last_game_stats, 

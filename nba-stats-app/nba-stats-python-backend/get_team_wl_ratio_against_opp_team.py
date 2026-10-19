@@ -76,9 +76,9 @@ async def get_team_wl_ratio_against_opp_team(team: str, season_type: str, opposi
     team_binary_win_loss_array = []
 
     for match in matches_against_opp_team:
-        
+
         if match[1] == 'W':
-        
+
             team_binary_win_loss_array.append(1)
 
         elif match[1] == 'L':

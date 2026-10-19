@@ -25,123 +25,44 @@ Space complexity: O(1)
 
 /* Libraries */
 
-import React from "react";
-
 const Help = () => {
 
     return (
-        <React.Fragment key="help">
-        <p>
-            The screen you were previously on was
-            the input screen. That screen has an
-            Upcoming Games link, and inputs. The
-            Upcoming Games link shows 5 upcoming
-            games, and the player stats for each
-            team in the game.
-        </p>
-        <p>
-            The inputs change depending on the
-            button above them. If the button
-            says 'Switch to Matchup Projections',
-            then the inputs are for calculating
-            player stats. If the button says
-            'Switch to Player Projections', then
-            the inputs are for calculating matchup
-            stats and the winner of a matchup.
-        </p>
-        <p>
-            The inputs are the following for 
-            player stat calculations:
-        </p>
-        <p>
-            <strong>Player Full Name</strong>: self-explanatory.
-        </p>
-        <p>
-            <strong>Season Year</strong>: the year you want to see 
-            the player stats for.
-        </p>
-        <p>
-            <strong>Season Type</strong>: the season type you want
-            to see the player stats for.
-        </p>
-        <p>
-            <strong>Opposing Team (optional)</strong>: calculates
-            a player's stats with respect to an
-            opposing team. If blank, does nothing.
-        </p>
-        <p>
-            <strong>Recent Games (optional)</strong>: calculates a
-            player's stats while only considering
-            the last x games, where x is the user's
-            numerical input. If blank, considers all
-            games.
-        </p>
-        <p>
-            The inputs are the following for 
-            matchup stat calculations:
-        </p>
-        <p>
-            <strong>Team</strong>: self-explanatory.
-        </p>
-        <p>
-            <strong>Season Year</strong>: the year you want to see 
-            the matchup stats for.
-        </p>
-        <p>
-            <strong>Season Type</strong>: the season type you want
-            to see the matchup stats for.
-        </p>
-        <p>
-            <strong>Opposing Team (optional)</strong>: The
-            opposing team in the matchup.
-            If blank, the stats of the team
-            input are calculated without taking
-            other teams into consideration.
-        </p>
-        <p>
-            <strong>Recent Games (optional)</strong>: calculates 
-            the matchup's stats while only
-            considering the last x games in 
-            the matchup. If blank, considers
-            all games.
-        </p>
-        <p>
-            Upon submitting either set of
-            inputs, the corresponding stats
-            are displayed. The matchup stats 
-            are displayed in an HTML table, 
-            that you can scroll through.
-        </p>
-        <p>
-            If you wish to see the stats of an 
-            entire team, use the matchup inputs
-            and leave the opposing team blank.
-            Alternatively, you could also look
-            at the upcoming games and see if
-            the team you want is there.
-        </p>
-        <p>
-            <strong>NOTE:</strong> The site may
-            lag heavily when calculating stats,
-            due to data being updated every 30
-            minutes. It should be very rare,
-            but I am letting you know in case
-            you experience it. Also, the players
-            and teams in the inputs are loaded once
-            in the app, so if you want an update,
-            log out and log back in to refresh the
-            data. Same logic applies for information
-            in the Upcoming Games tab. Also, due to
-            security concerns, the app requires a
-            login every 10 minutes to refresh access.
-        </p>
-        <p>
-            Have fun using the site.
-        </p>
-        <p>
-            -EramMKabir
-        </p>
-        </React.Fragment>
+        <div className="help-grid" key="help">
+            <article className="help-card help-intro">
+                <span className="help-number">01</span>
+                <h2>Pick a projection mode</h2>
+                <p><strong>Player</strong> estimates one athlete’s output. <strong>Matchup</strong> projects team performance and a likely winner.</p>
+            </article>
+            <article className="help-card">
+                <span className="help-number">02</span>
+                <h2>Add the essentials</h2>
+                <dl>
+                    <div><dt>Player or team</dt><dd>Select the subject of your model.</dd></div>
+                    <div><dt>Season year</dt><dd>Choose the NBA season to analyze.</dd></div>
+                    <div><dt>Season type</dt><dd>Preseason, regular season, or playoffs.</dd></div>
+                </dl>
+            </article>
+            <article className="help-card">
+                <span className="help-number">03</span>
+                <h2>Refine the signal</h2>
+                <dl>
+                    <div><dt>Opposing team</dt><dd>Optional. Adds head-to-head context.</dd></div>
+                    <div><dt>Recent games</dt><dd>Optional. Limits analysis to the latest games.</dd></div>
+                    <div><dt>Game date (optional)</dt><dd>Matchups only. Uses data from before the chosen date and accounts for team rest.</dd></div>
+                    <div><dt>Venue</dt><dd>Matchups only. Choose whether the selected team or opponent is at home, or select a neutral court. Leave unspecified if unknown.</dd></div>
+                </dl>
+            </article>
+            <article className="help-card help-wide">
+                <span className="help-number">04</span>
+                <h2>Read the output</h2>
+                <p>Player projections appear as a stat grid. Matchup projections include a winner signal, modeled score, historical record, and scrollable player tables. To view an entire team without head-to-head weighting, leave the opponent blank.</p>
+            </article>
+            <aside className="system-note">
+                <span className="live-dot" />
+                <p><strong>Data note</strong> Player and team data refresh every 30 minutes. If lists appear stale, log out and back in. For security, access sessions refresh every 10 minutes.</p>
+            </aside>
+        </div>
     );
 };
 

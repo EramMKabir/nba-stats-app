@@ -34,7 +34,7 @@ Space complexity: O(n*m)
 /* Libraries and Functions */
 import { setNoPlayersOrTeams, setUpcomingGamesStats } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useMediaQuery } from "react-responsive";
 import React, { useEffect } from "react";
 
@@ -115,10 +115,8 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
   */
 
   useEffect(() => {
-    if (teamsArray.length === 0 || playersArray.length === 0) {
-      dispatch(setNoPlayersOrTeams(true));
-    }
-  }, [teamsArray, playersArray]);
+    dispatch(setNoPlayersOrTeams(teamsArray.length === 0 || playersArray.length === 0));
+  }, [teamsArray, playersArray, seed, dispatch]);
 
   /* Function to navigate to home tab. */
   const navToHome = () => {
@@ -205,16 +203,19 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
     return teamsArray.map((team, index) => {
       const firstTeamPlayers = [...headersPlusPlayersArray].filter(player => player[0].slice(-3) === team.first_team_abbreviation);
       const secondTeamPlayers = [...headersPlusPlayersArray].filter(player => player[0].slice(-3) === team.second_team_abbreviation);
-      return (<div key={`${team.first_team_abbreviation}-${team.second_team_abbreviation}-${index}`}>
-        <h2 className="upcomingStatsHeader">{team.first_team_abbreviation} vs. {team.second_team_abbreviation}</h2>
-        <h2 className="upcomingStatsHeader">{team.first_team_abbreviation}</h2>
+      return (<article className="matchup-block" key={`${team.first_team_abbreviation}-${team.second_team_abbreviation}-${index}`}>
+        <div className="matchup-title">
+          <span>Game {String(index + 1).padStart(2, "0")}</span>
+          <h2>{team.first_team_abbreviation} <i>vs</i> {team.second_team_abbreviation}</h2>
+        </div>
+        <h3 className="upcomingStatsHeader">{team.first_team_abbreviation} roster</h3>
         <div className="upcoming-stats-wrapper">
           <React.Fragment key={`${team.first_team_abbreviation}`}>
             <table key={`${team.first_team_abbreviation}`} className="table">
               <tbody>
                 {firstTeamPlayers.map((player, index) => (
                   <tr key={index}>
-                    {player.slice(1).map((header, index) => (
+                    {player.slice(1).map((header) => (
                       <th key={header}>{header}</th>
                     ))}
                   </tr>
@@ -222,13 +223,13 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
               </tbody>
             </table>
           </React.Fragment>
-          <h2 className="upcomingStatsHeader">{team.second_team_abbreviation}</h2>
+          <h3 className="upcomingStatsHeader">{team.second_team_abbreviation} roster</h3>
           <React.Fragment key={`${team.second_team_abbreviation}`}>
             <table key={`${team.second_team_abbreviation}`} className="table">
               <tbody>
                 {secondTeamPlayers.map((player, index) => (
                   <tr key={index}>
-                    {player.slice(1).map((header, index) => (
+                    {player.slice(1).map((header) => (
                       <th key={header}>{header}</th>
                     ))}
                   </tr>
@@ -237,7 +238,7 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
             </table>
           </React.Fragment>
         </div>
-      </div>);
+      </article>);
     });
   };
 
@@ -245,69 +246,78 @@ const NBATeamsAndPlayersStatsDisplay = ({ seed, teamsArray, playersArray }) => {
     return teamsArray.map((team, index) => {
       const firstTeamPlayers = playersArray.filter(player => player.team_abbreviation === team.first_team_abbreviation);
       const secondTeamPlayers = playersArray.filter(player => player.team_abbreviation === team.second_team_abbreviation);
-      return (<div key={`${team.first_team_abbreviation}-${team.second_team_abbreviation}-${index}`}>
-        <h2>{team.first_team_abbreviation} vs. {team.second_team_abbreviation}</h2>
-        <h2>{team.first_team_abbreviation}</h2>
-        <table>
+      return (<article className="matchup-block" key={`${team.first_team_abbreviation}-${team.second_team_abbreviation}-${index}`}>
+        <div className="matchup-title">
+          <span>Game {String(index + 1).padStart(2, "0")}</span>
+          <h2>{team.first_team_abbreviation} <i>vs</i> {team.second_team_abbreviation}</h2>
+        </div>
+        <h3>{team.first_team_abbreviation} roster</h3>
+        <div className="table-scroll"><table>
           <tbody>
             <tr key={`${team.first_team_abbreviation}-${index}`}>
-              {orderedHeaders.map((header, index) => (
+              {orderedHeaders.map((header) => (
                 <th key={header}>{header}</th>
               ))}
             </tr>
             {
               [...firstTeamPlayers].sort((player, secondPlayer) => secondPlayer.points - player.points).map((player, index) => (
                 <tr key={index}>
-                  {orderedHeaders.map((header, index) => (
+                  {orderedHeaders.map((header) => (
                     <td key={header}>{player[mappedHeaders[header]]}</td>
                   ))}
                 </tr>
               ))
             }
           </tbody>
-        </table>
-        <br />
-        <h2>{team.second_team_abbreviation}</h2>
-        <table>
+        </table></div>
+        <h3>{team.second_team_abbreviation} roster</h3>
+        <div className="table-scroll"><table>
           <tbody>
             <tr>
-              {orderedHeaders.map((header, index) => (
+              {orderedHeaders.map((header) => (
                 <th key={header}>{header}</th>
               ))}
             </tr>
             {
               [...secondTeamPlayers].sort((player, secondPlayer) => secondPlayer.points - player.points).map((player, index) => (
                 <tr key={index}>
-                  {orderedHeaders.map((header, index) => (
+                  {orderedHeaders.map((header) => (
                     <td key={header}>{player[mappedHeaders[header]]}</td>
                   ))}
                 </tr>
               ))
             }
           </tbody>
-        </table>
-      </div>);
+        </table></div>
+      </article>);
     });
   };
 
   return (
-    <div className="upcomingStats">
-      {/* Button to go back, shown when there are players or teams */}
-      {!noPlayersOrTeams && <button onClick={navToHome}>Go Back</button>}
+    <section className="upcomingStats content-panel">
+      <div className="section-heading slate-heading">
+        <div>
+          <div className="eyebrow">Next on the floor</div>
+          <h1>Upcoming games</h1>
+          <p>Projected player output across the next NBA slate.</p>
+        </div>
+        <button type="button" className="secondary-action" onClick={navToHome}>← Back to projections</button>
+      </div>
       {/* Message when no games found */}
       {noPlayersOrTeams &&
         (
-          <div>
-            <h2>No games were found.</h2>
+          <div className="empty-state">
+            <span>00</span>
+            <h2>No games found</h2>
+            <p>The next slate has not been published yet. Check back shortly.</p>
           </div>
         )}
       {/* Mobile view: display for non-desktop/laptop */}
       {!noPlayersOrTeams && !isDesktopOrLaptop && mobileStatsView()}
       {/* Desktop view: table format */}
       {!noPlayersOrTeams && isDesktopOrLaptop && desktopStatsView()}
-      <br />
-      <button onClick={navToHome}>Go Back</button>
-    </div>
+      {!noPlayersOrTeams && <button type="button" className="secondary-action bottom-action" onClick={navToHome}>← Back to projections</button>}
+    </section>
   );
 };
 

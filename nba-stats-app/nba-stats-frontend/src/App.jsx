@@ -26,7 +26,7 @@ Space complexity: O(n)
 
 /* Libraries and Functions */
 
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router";
 import { configureStore } from "@reduxjs/toolkit";
 import { useSelector, useDispatch, Provider } from "react-redux";
 import Inputs from "./components/Inputs";
@@ -48,7 +48,7 @@ import stringReducer, { setPlayerName } from "./reducers/stringReducer";
 import arrayReducer, { setTeamsArray, setPlayersArray, setPlayerNamesArray, setTeamAbbreviationsArray } from "./reducers/arrayReducer";
 import numberReducer, { setSeed, setTeamPoints, setOppTeamPoints } from "./reducers/numberReducer";
 import { AuthProvider } from "./context/authContext";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth } from "./context/authContext";
 import playersStatsService from "./services/playerstats";
 import upcomingGameTeamsService from "./services/upcominggameteams";
@@ -101,7 +101,7 @@ function App() {
     if (token) {
       setPlayersAndTeams(); /* Run function to get teams and players (or lack thereof). */
     };
-  }, [token]);
+  }, [token, dispatch]);
 
   const { setToken } = useAuth(); /* Context variable for setting token */
 
@@ -228,7 +228,7 @@ function App() {
     };
   };
 
-  const getMatchupStats = async (team, season, seasonType, opposingTeam, recentGames) => {
+  const getMatchupStats = async (team, season, seasonType, opposingTeam, recentGames, context = {}) => {
     if (!opposingTeam) {
       opposingTeam = "";
     }
@@ -237,7 +237,9 @@ function App() {
       season,
       seasonType,
       opposingTeam,
-      recentGames
+      recentGames,
+      ...(context.gameDate ? { gameDate: context.gameDate } : {}),
+      venue: context.venue || "auto"
     }, token);
     const timeoutDuration = 2000;
     window.scrollTo(0, 0);
@@ -269,106 +271,174 @@ function App() {
       setTimeout(() => {
         dispatch(setErrorMessage(null));
       }, timeoutDuration);
+    } else if (newDictionary.matchup_stats === 5 || newDictionary.ratio_stats === 5) {
+      dispatch(setErrorMessage("Please enter a year for the game date matching the season year."));
+      setTimeout(() => {
+        dispatch(setErrorMessage(null));
+      }, timeoutDuration);
     };
   };
 
   /* Entire app is described below */
-  const Home = () => {
+  /* 
+     Return a stable element tree; defining a component here remounts the form
+     whenever App updates (including when a notification expires). 
+  */
+  const renderHome = () => {
     return (
       <div className="home-content">
-        {titleDisplay && <h1>
-          <span>
-            NBA Projected Stat Calculator
-          </span>
-        </h1>}
+        {titleDisplay && (
+          <section className="hero-panel" aria-labelledby="hero-title">
+            <div className="hero-copy">
+              <div className="eyebrow"><span className="live-dot" /> NBA projection engine</div>
+              <h1 id="hero-title">See the game<br /><span>before the whistle.</span></h1>
+              <p>
+                Turn historical performance, recent form, and matchup context
+                into a sharper view of what happens next.
+              </p>
+              <div className="signal-row" aria-label="Available analysis modes">
+                <span>Player form</span>
+                <span>Matchup model</span>
+                <span>Upcoming slate</span>
+              </div>
+            </div>
+            <div className="hero-visual" aria-hidden="true">
+              <div className="court-orbit court-orbit-one" />
+              <div className="court-orbit court-orbit-two" />
+              <div className="court-core">
+                <span>CV</span>
+                <small>PROJECTION<br />SYSTEM</small>
+              </div>
+              <div className="metric-float metric-float-one"><b>+8.4</b><span>FORM</span></div>
+              <div className="metric-float metric-float-two"><b>62%</b><span>EDGE</span></div>
+            </div>
+          </section>
+        )}
 
-        {mainPageDisplay && <Inputs
-          getPlayerStats={getPlayerStats}
-          getMatchupStats={getMatchupStats}
-          playerNamesArray={playerNamesArray}
-          teamAbbreviationsArray={teamAbbreviationsArray}
-        />}
+        {mainPageDisplay && (
+          <section className="workspace-shell">
+            <Inputs
+              getPlayerStats={getPlayerStats}
+              getMatchupStats={getMatchupStats}
+              playerNamesArray={playerNamesArray}
+              teamAbbreviationsArray={teamAbbreviationsArray}
+            />
+            <div className="workspace-footer">
+              <button className="text-action" onClick={() => switchBetweenMainAndHelp(true)}>
+                How it works <span aria-hidden="true">↗</span>
+              </button>
+              <button onClick={removeUser} className="text-action logout">
+                Log out
+              </button>
+            </div>
+          </section>
+        )}
 
-        {mainPageDisplay && <React.Fragment>
-          <br />
-          <button onClick={() => switchBetweenMainAndHelp(true)}>
-            Help
-          </button>
-        </React.Fragment>}
+        {helpPageDisplay && (
+          <section className="content-panel help-panel">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">Field guide</div>
+                <h1>How CourtVision works</h1>
+              </div>
+              <button className="secondary-action" onClick={() => switchBetweenMainAndHelp(false)}>
+                ← Return to projections
+              </button>
+            </div>
+            <Help />
+          </section>
+        )}
 
-        {mainPageDisplay && <React.Fragment>
-          <br />
-          <button
-            onClick={removeUser}
-            className="logout">
-            Log Out
-          </button>
-        </React.Fragment>}
+        {statsPageDisplay && (
+          <section className="content-panel results-panel">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">Player projection</div>
+                <h1>{playerName}</h1>
+              </div>
+              <button className="secondary-action" onClick={removePlayerStats}>
+                ← New projection
+              </button>
+            </div>
+            <IndividualPlayerStatsDictionaryDisplay statsDictionary={playerStatsDictionary} />
+          </section>
+        )}
 
-        {helpPageDisplay && <Help />}
+        {OAuthDisplay && (
+          <section className="login-panel">
+            <div>
+              <div className="eyebrow">Your private workspace</div>
+              <h2>Enter the control room.</h2>
+              <p>Sign in to access live player data and matchup projections.</p>
+            </div>
+            <OAuthLogin />
+            <OAuthCallback />
+            <small>Secure access · Session protected</small>
+          </section>
+        )}
 
-        {helpPageDisplay && <button
-          onClick={() => switchBetweenMainAndHelp(false)}>
-          Return to Inputs
-        </button>}
-
-        {statsPageDisplay && <h1>{playerName}</h1>}
-
-        {statsPageDisplay && <IndividualPlayerStatsDictionaryDisplay
-          statsDictionary={playerStatsDictionary}
-        />}
-
-        {statsPageDisplay && <React.Fragment>
-          <br />
-          <button
-            onClick={removePlayerStats}>
-            Return to Inputs
-          </button>
-        </React.Fragment>}
-
-        {OAuthDisplay && <React.Fragment>
-          <OAuthLogin />
-          <OAuthCallback />
-        </React.Fragment>}
-
-        {teamStatsPageDisplay && <RatioDictionaryDisplay
-          ratioDict={ratioDict}
-          teamStatsDictionary={teamStatsDictionary}
-          teamPoints={teamPoints}
-          oppTeamPoints={oppTeamPoints} />}
-
-        {teamStatsPageDisplay && <NBATeamsAndPlayersCalculatedStatsDisplay
-          teamStatsDictionary={teamStatsDictionary}
-          lastGameStatsDictionary={lastGameStatsDictionary}
-          injuredPlayersDictionary={injuredPlayersDictionary} />}
-
-        {teamStatsPageDisplay && <React.Fragment>
-          <br />
-          <button
-            onClick={removeTeamStats}>
-            Return to Inputs
-          </button>
-        </React.Fragment>}
+        {teamStatsPageDisplay && (
+          <section className="content-panel results-panel matchup-results">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">Matchup projection</div>
+                <h1>Game intelligence</h1>
+              </div>
+              <button className="secondary-action" onClick={removeTeamStats}>
+                ← New projection
+              </button>
+            </div>
+            <RatioDictionaryDisplay
+              ratioDict={ratioDict}
+              teamStatsDictionary={teamStatsDictionary}
+              teamPoints={teamPoints}
+              oppTeamPoints={oppTeamPoints}
+            />
+            <NBATeamsAndPlayersCalculatedStatsDisplay
+              teamStatsDictionary={teamStatsDictionary}
+              lastGameStatsDictionary={lastGameStatsDictionary}
+              injuredPlayersDictionary={injuredPlayersDictionary}
+            />
+          </section>
+        )}
       </div>
     );
   };
 
   return (
     <div className="main-container">
+      <div className="ambient ambient-one" aria-hidden="true" />
+      <div className="ambient ambient-two" aria-hidden="true" />
+      <div className="scan-grid" aria-hidden="true" />
       <Router>
-        {mainPageDisplay && <nav className="topleft">
-          <Link
-            to="/upcoming-games"
-            onClick={goToUpcomingGames}>
-            Upcoming Games
+        <header className="app-header">
+          <Link className="brand" to="/" aria-label="CourtVision home">
+            <span className="brand-mark"><i /></span>
+            <span className="brand-name">COURT<span>VISION</span></span>
           </Link>
-        </nav>}
-        <Success message={successMessage} />
-        <Error message={errorMessage} />
-        <Routes>
-          <Route path='/' element={<Home />}></Route>
-          <Route path="/upcoming-games" element={<NBATeamsAndPlayersStatsDisplay seed={seed} teamsArray={teamsArray} playersArray={playersArray} />}></Route>
-        </Routes>
+          <nav className="app-nav" aria-label="Primary navigation">
+            {mainPageDisplay && (
+              <Link className="nav-link" to="/upcoming-games" onClick={goToUpcomingGames}>
+                Upcoming games <span aria-hidden="true">↗</span>
+              </Link>
+            )}
+            <div className="system-status"><span /> System live</div>
+          </nav>
+        </header>
+        <main className="app-main">
+          <div className="toast-region" aria-live="polite">
+            <Success message={successMessage} />
+            <Error message={errorMessage} />
+          </div>
+          <Routes>
+            <Route path='/' element={renderHome()}></Route>
+            <Route path="/upcoming-games" element={<NBATeamsAndPlayersStatsDisplay seed={seed} teamsArray={teamsArray} playersArray={playersArray} />}></Route>
+          </Routes>
+        </main>
+        <footer className="app-footer">
+          <span>COURTVISION / PROJECTION SYSTEM</span>
+          <span>Data-driven. Game ready.</span>
+        </footer>
       </Router>
     </div>
   );

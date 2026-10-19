@@ -93,7 +93,7 @@
 # create_player_stats_avg_mv: O(n*m), where n and m are the number of
 # rows and columns in weighted_values_np_arr.
 
-# calculate_team_stats: O(max(i*j*k, x*y*z)), where i is the depth number 
+# calculate_team_stats: O(max(i*j*k, x*y*z)), where i is the depth number
 # of the player_matchups_l array, j and k are the rows and columns of the
 # player_matchups_l array, x is the depth number of the opp_player_matchups_mv
 # array, and y and z are the rows and columns of the opp_player_matchups_mv

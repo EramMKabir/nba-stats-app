@@ -12,11 +12,18 @@ getPlayerStats: A function that calculates NBA player stats by using
 getMatchupStats: A function that calculates NBA matchup stats by using
                 a microservice on the backend.
 
+playerNamesArray: Self-explanatory.
+
+teamAbbreviationsArray: Self-explanatory.
+
 Output:
 
 A form component that accepts a player's full name, season, season type,
-opposing team, recent game amount, and option type for projection
-calculations.
+opposing team, and recent game amount for player data.
+
+It also accepts a team name, season, season type, opposing team,
+recent game amount, game date to obtain data up to, and venue
+for matchup data.
 
 Time complexity: O(n), where n is the number of components in the HTML Tree.
 
@@ -33,11 +40,12 @@ Space complexity: O(n)
 
 /* Libraries and Functions */
 
-import { setPlayerFullName, setSeason, setSeasonType, setOpposingTeam, setRecentGames, setTeam, setSeasonM, setSeasonTypeM, setOpposingTeamM, setRecentGamesM, setPlayerFullNameInput, setSeasonInput, setSeasonTypeInput, setOpposingTeamInput, setTeamInput, setSeasonMInput, setSeasonTypeMInput, setOpposingTeamMInput } from "../reducers/stringReducer";
+import { setPlayerFullName, setSeason, setSeasonType, setOpposingTeam, setRecentGames, setTeam, setSeasonM, setSeasonTypeM, setOpposingTeamM, setRecentGamesM, setPlayerFullNameInput, setSeasonInput, setSeasonTypeInput, setOpposingTeamInput, setTeamInput, setSeasonMInput, setSeasonTypeMInput, setOpposingTeamMInput, setGameDate, setVenue } from "../reducers/stringReducer";
 import { setSwapInputsToPlayer, setSwapInputsToMatchup } from "../reducers/booleanReducer";
 import { useSelector, useDispatch } from "react-redux";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import { useMediaQuery } from "react-responsive";
 
 const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbreviationsArray }) => {
@@ -65,15 +73,19 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   seasonMInput: The input value for the seasonM field
   seasonTypeMInput: The input value for the seasonTypeM field
   opposingTeamMInput: The input value for the opposingTeamM field
+  gameDate: The input value for the game date field
+  venue: The input value for the venue field
 
   For the player projections, the inputs are:
   playerFullName, season, seasonType,
-  opposingTeam (to see performance against a certain team), 
-  recentGames (to see recent performance).
+  opposingTeam (to see performance against a certain team, optional), 
+  and recentGames (to see recent performance, optional).
 
   For the matchup projections, the inputs are:
   team, seasonM, seasonTypeM, 
-  opposingTeamM, recentGamesM.
+  opposingTeamM, recentGamesM,
+  game date (to retrieve data up to, optional),
+  and venue (optional).
 
   All states are managed using
   Redux, and all the reducers
@@ -101,6 +113,8 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   const seasonMInput = useSelector((state) => state.stringReducer.seasonMInput);
   const seasonTypeMInput = useSelector((state) => state.stringReducer.seasonTypeMInput);
   const opposingTeamMInput = useSelector((state) => state.stringReducer.opposingTeamMInput);
+  const gameDate = useSelector((state) => state.stringReducer.gameDate);
+  const venue = useSelector((state) => state.stringReducer.venue);
 
   const dispatch = useDispatch(); /* Used to change state */
   /* 
@@ -131,6 +145,8 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   };
 
   const resetMatchupInputs = () => {
+    dispatch(setGameDate(''));
+    dispatch(setVenue("auto"));
     dispatch(setTeam(''));
     dispatch(setTeamInput(''));
     dispatch(setSeasonM(''));
@@ -191,7 +207,7 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   /*
   The following functions take the inputs a user
   made, and sends them to the backend
-  microservices as a request for matchup
+  monolith as a request for matchup
   information or as a request for player
   information. If any input is not valid, then
   the inputs are cleared and no response is given.
@@ -211,7 +227,8 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
     if (!playerFullNameInPlayerNamesArray
       || !years.includes(season)
       || !seasonTypes.includes(seasonType)
-      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeam.team_abbreviation))) {
+      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeam.team_abbreviation))) 
+    {
       resetPlayerInputs();
       return;
     };
@@ -234,7 +251,8 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
     if (!teamInTeamAbbreviationsArray
       || !years.includes(seasonM)
       || !seasonTypes.includes(seasonTypeM)
-      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeamM.team_abbreviation))) {
+      || ((!opposingTeamInTeamAbbreviationsArray) && (opposingTeamM.team_abbreviation))) 
+    {
       resetMatchupInputs();
       return;
     };
@@ -242,7 +260,7 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
       seasonM,
       seasonTypeM,
       opposingTeamM.team_abbreviation,
-      recentGamesM);
+      recentGamesM, { gameDate, venue });
     resetMatchupInputs();
   };
 
@@ -380,7 +398,7 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
 
   Finally, there is a submit button
   to send the inputs to the backend
-  microservices for calculation.
+  monolith for calculation.
 
   */
 
@@ -536,53 +554,85 @@ const Inputs = ({ getPlayerStats, getMatchupStats, playerNamesArray, teamAbbrevi
   };
   /*
   The following return makes the input
-  fields for the user to fill.
+  fields for the user to fill. The
+  game date and venue fields are just 
+  simple text fields, with game date
+  being a date field, and venue having
+  predefined options.
   */
 
   return (
-    <div>
-      <h2><span className="NBAInputsStatSpan">Find NBA Projected Stats</span></h2>
-      {!swapInputsToPlayer && <button title="Click this to enter inputs for calculating stats of a player." onClick={setInputsToPlayer}>Switch to Player Projections</button>}
-      {!swapInputsToMatchup && <button title="Click this to enter inputs for calculating stats of a team." onClick={setInputsToMatchup}>Switch to Matchup Projections</button>}
-      <br />
-      <br />
+    <div className="projection-builder">
+      <div className="builder-header">
+        <div>
+          <div className="eyebrow">Build a projection</div>
+          <h2>Choose your lens.</h2>
+          <p>Set the context. CourtVision will run the numbers.</p>
+        </div>
+        <div className="mode-switcher" role="group" aria-label="Projection type">
+          <button
+            type="button"
+            className={swapInputsToPlayer ? "active" : ""}
+            title="Calculate projected stats for a player"
+            onClick={setInputsToPlayer}
+          >
+            <span>01</span> Player
+          </button>
+          <button
+            type="button"
+            className={swapInputsToMatchup ? "active" : ""}
+            title="Calculate projected stats for a matchup"
+            onClick={setInputsToMatchup}
+          >
+            <span>02</span> Matchup
+          </button>
+        </div>
+      </div>
       {swapInputsToPlayer &&
-        <form key="playerForm" onSubmit={getPlayerInputs}>
-          {playerNameComponent()}
-          <br />
-          <br />
-          {seasonYearComponent(season, seasonInput, { setSeason: (v) => dispatch(setSeason(v)), setSeasonInput: (v) => dispatch(setSeasonInput(v)) })}
-          <br />
-          <br />
-          {seasonTypeComponent(seasonType, seasonTypeInput, { setSeasonType: (v) => dispatch(setSeasonType(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeInput(v)) })}
-          <br />
-          <br />
-          {opposingTeamComponent(opposingTeam, opposingTeamInput, { setOpposingTeam: (v) => dispatch(setOpposingTeam(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamInput(v)) })}
-          <br />
-          <br />
-          {recentGamesComponent(recentGames, { sanitizeRecentGamesInput })}
-          <br />
-          <br />
-          <button type="submit">Submit</button>
+        <form key="playerForm" className="projection-form" onSubmit={getPlayerInputs}>
+          <div className="field-grid">
+            <div className="field field-wide">{playerNameComponent()}</div>
+            <div className="field">{seasonYearComponent(season, seasonInput, { setSeason: (v) => dispatch(setSeason(v)), setSeasonInput: (v) => dispatch(setSeasonInput(v)) })}</div>
+            <div className="field">{seasonTypeComponent(seasonType, seasonTypeInput, { setSeasonType: (v) => dispatch(setSeasonType(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeInput(v)) })}</div>
+            <div className="field">{opposingTeamComponent(opposingTeam, opposingTeamInput, { setOpposingTeam: (v) => dispatch(setOpposingTeam(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamInput(v)) })}</div>
+            <div className="field">{recentGamesComponent(recentGames, { sanitizeRecentGamesInput })}</div>
+          </div>
+          <div className="form-footer">
+            <p><span /> Optional fields refine the model; they are not required.</p>
+            <button className="primary-action" type="submit">
+              Run player model <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </form>}
       {swapInputsToMatchup &&
-        <form key="matchupForm" onSubmit={getMatchupInputs}>
-          {teamComponent()}
-          <br />
-          <br />
-          {seasonYearComponent(seasonM, seasonMInput, { setSeason: (v) => dispatch(setSeasonM(v)), setSeasonInput: (v) => dispatch(setSeasonMInput(v)) })}
-          <br />
-          <br />
-          {seasonTypeComponent(seasonTypeM, seasonTypeMInput, { setSeasonType: (v) => dispatch(setSeasonTypeM(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeMInput(v)) })}
-          <br />
-          <br />
-          {opposingTeamComponent(opposingTeamM, opposingTeamMInput, { setOpposingTeam: (v) => dispatch(setOpposingTeamM(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamMInput(v)) })}
-          <br />
-          <br />
-          {recentGamesComponent(recentGamesM, { sanitizeRecentGamesInput: sanitizeRecentGamesInputM })}
-          <br />
-          <br />
-          <button type="submit">Submit</button>
+        <form key="matchupForm" className="projection-form" onSubmit={getMatchupInputs}>
+          <div className="field-grid">
+            <div className="field field-wide">{teamComponent()}</div>
+            <div className="field">{seasonYearComponent(seasonM, seasonMInput, { setSeason: (v) => dispatch(setSeasonM(v)), setSeasonInput: (v) => dispatch(setSeasonMInput(v)) })}</div>
+            <div className="field">{seasonTypeComponent(seasonTypeM, seasonTypeMInput, { setSeasonType: (v) => dispatch(setSeasonTypeM(v)), setSeasonTypeInput: (v) => dispatch(setSeasonTypeMInput(v)) })}</div>
+            <div className="field">{opposingTeamComponent(opposingTeamM, opposingTeamMInput, { setOpposingTeam: (v) => dispatch(setOpposingTeamM(v)), setOpposingTeamInput: (v) => dispatch(setOpposingTeamMInput(v)) })}</div>
+            <div className="field">{recentGamesComponent(recentGamesM, { sanitizeRecentGamesInput: sanitizeRecentGamesInputM })}</div>
+            <div className="field">
+              <TextField fullWidth size={autoCompleteSize} type="date" label="Game date (optional)" className="whiteAutoComplete"
+                value={gameDate} onChange={(event) => dispatch(setGameDate(event.target.value))}
+                InputLabelProps={{ shrink: true }} />
+            </div>
+            <div className="field">
+              <TextField fullWidth select size={autoCompleteSize} label="Venue" value={venue} className="whiteAutoComplete"
+                onChange={(event) => dispatch(setVenue(event.target.value))}>
+                <MenuItem value="auto">Unspecified</MenuItem>
+                <MenuItem value="home">Selected team at home</MenuItem>
+                <MenuItem value="away">Opponent at home</MenuItem>
+                <MenuItem value="neutral">Neutral court</MenuItem>
+              </TextField>
+            </div>
+          </div>
+          <div className="form-footer">
+            <p><span /> Add an opponent to calculate a head-to-head edge.</p>
+            <button className="primary-action" type="submit">
+              Run matchup model <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </form>}
     </div>
   );

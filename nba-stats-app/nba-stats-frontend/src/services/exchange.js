@@ -33,14 +33,13 @@ Library
 import axios from "axios";
 
 const baseUrl = import.meta.env.VITE_PYTHON_API_BASE_URL;
+const stateStorageKey = "oauth_state";
 
-const exchange = async (code, state) => {
-  try{
-  const response = await axios.post(`${baseUrl}/oauth/exchange`, { code: code, state: state }, { withCredentials: true });
-  return response;
-  } catch (error) {
-    return { token: null, error };
-  };
-};
+const start = async () => (await axios.get(`${baseUrl}/oauth/login`, {
+  params: { response_mode: "json" },
+})).data;
 
-export default { exchange };
+const exchange = async (code, state) =>
+  (await axios.post(`${baseUrl}/oauth/exchange`, { code, state })).data;
+
+export default { exchange, start, stateStorageKey };

@@ -69,13 +69,28 @@ const IndividualPlayerStatsDictionaryDisplay = ({ statsDictionary }) => {
     /* 
     map is used to put each key
     and value pair on an HTML line.
+
+    className for the second div
+    varies depending on whether or
+    not the displayed stat is PTS.
+    
+    Underscores are removed for
+    all stat names.
+
+    The plus_minus stat is the only
+    stat that is allowed to be less
+    than 0.
+
+    All other stats must be 0 or
+    higher.
     */
 
     return (
-      <div>
+      <div className="stat-grid">
         {orderedHeaders.map((statNames, index) => (
-          <div key={index}>
-            <strong>{statNames}:</strong> {statNames === "PLUS_MINUS" ? statsDictionary[statNames] : Math.max(0, statsDictionary[statNames])}
+          <div className={`stat-card ${statNames === "PTS" ? "featured-stat" : ""}`} key={index}>
+            <span>{statNames.replaceAll("_", " ")}</span>
+            <strong>{statNames === "PLUS_MINUS" ? statsDictionary[statNames] : Math.max(0, statsDictionary[statNames])}</strong>
           </div>
         ))}
       </div>

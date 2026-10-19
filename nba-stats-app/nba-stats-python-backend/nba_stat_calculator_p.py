@@ -120,6 +120,28 @@ def player_stats_table_query_string() -> str:
                      plus_minus, \
                      video_available "
 
+# The bundled NBA player directory is static for this process. Build its
+# arrays once; the Cython calculator only reads them, but its current
+# non-const memoryview signatures require writable NumPy buffers.
+
+def _build_player_metadata_arrays():
+
+    players_info_dict_arr = players.get_players()
+
+    all_player_ids_arr = np.array([p["id"] for p in players_info_dict_arr])
+
+    all_player_names_encoded = [(p["full_name"]).encode("utf-8") for p in players_info_dict_arr]
+
+    max_len_player_name = max(len(s) for s in all_player_names_encoded)
+
+    all_player_names_arr_bytes = np.array(all_player_names_encoded, dtype=f"|S{max_len_player_name*4}")
+
+    all_player_names_arr = all_player_names_arr_bytes.view(np.uint8).reshape(len(all_player_names_encoded), max_len_player_name*4)
+
+    return all_player_ids_arr, all_player_names_arr
+
+_PLAYER_METADATA_ARRAYS = _build_player_metadata_arrays()
+
 # Validation Schema for return value dataframes and input value
 # dataframes
 
@@ -356,7 +378,7 @@ async def get_player_deltas(opposing_team_abbreviation: str, player_full_name: s
                                    for row in player_stats_list_of_tuples]
 
     player_stats_df_columns = player_stats_df_columns_list()
-    
+
     player_stats_df = pd.DataFrame(player_stats_list_of_tuples, columns = player_stats_df_columns).head(recent_games)
     
     player_stats_df[["FG_PCT", "FG3_PCT", "FT_PCT"]] = (player_stats_df[["FG_PCT", "FG3_PCT", "FT_PCT"]]).astype(float)
@@ -408,7 +430,7 @@ async def player_stat_avg_hm(player_full_name: str,
                              opposing_team_abbreviation: str, 
                              recent_games: int, 
                              cur: asyncpg.Connection) -> Union[int, dict[str, float]]:
-    
+
     player_id = get_player_id(player_full_name)
 
     year_season_id_dict = {"Pre Season": [2025, 12024], 
@@ -458,7 +480,7 @@ async def player_stat_avg_hm(player_full_name: str,
     player_stats_list_of_tuples = [tuple((dict(row)).values()) for row in player_stats_list_of_tuples]
 
     player_stats_df_columns = player_stats_df_columns_list()
-    
+
     player_stats_df = pd.DataFrame(player_stats_list_of_tuples, columns = player_stats_df_columns).head(recent_games)
     
     player_team_name = player_stats_df["MATCHUP"].iloc[0][0:3]
@@ -530,7 +552,7 @@ async def calculate_player_stats_arrays(team: str,
                                                        npt.NDArray[np.uint8], 
                                                        npt.NDArray[np.int64], 
                                                        npt.NDArray[np.uint8]]]:
-    
+
     wrong_season_error_code = 3
 
     no_player_stats_error_code = 4
@@ -582,10 +604,10 @@ async def calculate_player_stats_arrays(team: str,
                                         include_opposing_team,
                                         opp_team_regex)
 
-    all_player_stats_info = [list(row)[1:] for row in player_stats_rows
+    all_player_stats_info = [row for row in player_stats_rows
                              if row["stats_side"] == "team"]
 
-    all_opp_player_stats_info = [list(row)[1:] for row in player_stats_rows
+    all_opp_player_stats_info = [row for row in player_stats_rows
                                  if row["stats_side"] == "opp"]
 
     if not all_player_stats_info:
@@ -600,13 +622,15 @@ async def calculate_player_stats_arrays(team: str,
         
         return no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code
 
-    filtered_all_player_stats_info = [[float(num) for num in row[6:-1]] for row in all_player_stats_info]
-
-    players_stats_np_arr = np.array(filtered_all_player_stats_info)
+    players_stats_np_arr = np.fromiter(
+        (float(value) if value is not None else None for row in all_player_stats_info for value in row[7:27]),
+        dtype=np.float64,
+        count=len(all_player_stats_info) * 20,
+    ).reshape(-1, 20)
     
-    player_ids = np.array([row[1] for row in all_player_stats_info])
+    player_ids = np.array([row[2] for row in all_player_stats_info])
 
-    player_matchups_encoded = [(row[4]).encode("utf8") for row in all_player_stats_info]
+    player_matchups_encoded = [(row[5]).encode("utf8") for row in all_player_stats_info]
 
     max_len_matchup = max(len(s) for s in player_matchups_encoded)
 
@@ -614,20 +638,10 @@ async def calculate_player_stats_arrays(team: str,
 
     player_matchups = player_matchups_bytes.view(np.uint8).reshape(len(player_matchups_encoded), max_len_matchup*4)
 
-    players_info_dict_arr = players.get_players()
-
-    all_player_ids_arr = np.array([p["id"] for p in players_info_dict_arr])
-
-    all_player_names_encoded = [(p["full_name"]).encode("utf-8") for p in players_info_dict_arr]
-
-    max_len_player_name = max(len(s) for s in all_player_names_encoded)
-
-    all_player_names_arr_bytes = np.array(all_player_names_encoded, dtype=f"|S{max_len_player_name*4}")
-
-    all_player_names_arr = all_player_names_arr_bytes.view(np.uint8).reshape(len(all_player_names_encoded), max_len_player_name*4)
+    all_player_ids_arr, all_player_names_arr = _PLAYER_METADATA_ARRAYS
 
     if not include_opposing_team:
-        
+
         empty_np_arr_2D_float = np.empty((0, 0), dtype=np.float64)
 
         empty_np_arr_2D_int = np.empty((0,), dtype=np.int64)
@@ -642,13 +656,15 @@ async def calculate_player_stats_arrays(team: str,
         
         return no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code
 
-    filtered_all_opp_player_stats_info = [[float(num) for num in row[6:-1]] for row in all_opp_player_stats_info]
+    opp_players_stats_np_arr = np.fromiter(
+        (float(value) if value is not None else None for row in all_opp_player_stats_info for value in row[7:27]),
+        dtype=np.float64,
+        count=len(all_opp_player_stats_info) * 20,
+    ).reshape(-1, 20)
 
-    opp_players_stats_np_arr = np.array(filtered_all_opp_player_stats_info)
+    opp_player_ids = np.array([row[2] for row in all_opp_player_stats_info])
 
-    opp_player_ids = np.array([row[1] for row in all_opp_player_stats_info])
-
-    opp_player_matchups_encoded = [(row[4]).encode("utf-8") for row in all_opp_player_stats_info]
+    opp_player_matchups_encoded = [(row[5]).encode("utf-8") for row in all_opp_player_stats_info]
 
     max_len_opp_matchup = max(len(s) for s in opp_player_matchups_encoded)
 

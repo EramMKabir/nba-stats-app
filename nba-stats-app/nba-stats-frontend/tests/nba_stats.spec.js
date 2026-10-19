@@ -39,6 +39,11 @@ In the same vein, the tests for the upcoming games
 table have also been omitted, since the data in
 that table changes on a daily basis and cannot be
 reliably tested with Playwright.
+
+In addition, tests require manual intervention
+to handle Google login. In the future, this will
+be updated, but as of now, this is not a major
+concern.
 */
 
 import dotenv from "dotenv";
@@ -53,7 +58,7 @@ test.describe("Nba stats", () => {
         await page.goto(process.env.VITE_FRONTEND_URL);
         const username = process.env.VITE_USERNAME;
         const password = process.env.VITE_PASSWORD;
-        await page.locator("text=Login with Google").click();
+        await page.getByRole("button", { name: "Continue with Google" }).click();
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(timeoutValue);
         await page.click('[aria-label="Email or phone"]');
@@ -74,10 +79,10 @@ test.describe("Nba stats", () => {
             await page.waitForTimeout(timeoutValue);
             await page.locator('span:has-text("Continue") >> ..').click();
             };
-        } catch (e) {};
+        } catch {/* nothing */};
         await page.waitForLoadState("networkidle");
         await page.waitForTimeout(timeoutValue);
-        await expect(page.locator("text=Find NBA Projected Stats")).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Choose your lens." })).toBeVisible();
     });
 
     test("user can get player stats", async ({ page }) => {
@@ -99,7 +104,7 @@ test.describe("Nba stats", () => {
     });
 
     test("user can get matchup stats", async ({ page }) => {
-        await page.locator('button:has-text("Switch to Matchup Projections")').click();
+        await page.getByRole("button", { name: /Matchup/ }).click();
         await page.waitForLoadState("networkidle");
         const testParamsList = ["ATL", "2025-26", "Regular Season", "BKN", '5'];
         const start = 0;
@@ -138,7 +143,7 @@ test.describe("Nba stats", () => {
     });
 
     test("user entered duplicate teams for matchup stats", async ({ page }) => {
-        await page.locator('button:has-text("Switch to Matchup Projections")').click();
+        await page.getByRole("button", { name: /Matchup/ }).click();
         await page.waitForLoadState("networkidle");
         const testParamsList = ["BKN", "2025-26", "Regular Season", "BKN", '5'];
         const start = 0;

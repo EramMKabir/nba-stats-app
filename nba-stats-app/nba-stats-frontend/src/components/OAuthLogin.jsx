@@ -23,21 +23,33 @@ Space complexity: O(1)
 
 */
 
+import exchangeService from "../services/exchange";
+
 /* 
 All this component does is 
 redirect the user to the OAuth 
-login page on the backend. 
+login page on the backend, if
+they click on the component's
+button.
 */
 
 export default function OAuthLogin() {
   const startLogin = async () => {
-    const baseUrl = import.meta.env.VITE_PYTHON_API_BASE_URL;
-    window.location.href = `${baseUrl}/oauth/login`;
+    try {
+      const { authorization_url: url, state } = await exchangeService.start();
+      if (!url || !state) throw new Error("Invalid OAuth response");
+      sessionStorage.setItem(exchangeService.stateStorageKey, state);
+      window.location.assign(url);
+    } catch {
+      console.error("Unable to start OAuth login");
+    }
   };
 
   return (
-    <button onClick={startLogin}>
-      Login with Google
+    <button className="google-login" onClick={startLogin}>
+      <span className="google-g" aria-hidden="true">G</span>
+      Continue with Google
+      <span className="login-arrow" aria-hidden="true">→</span>
     </button>
   );
 };
