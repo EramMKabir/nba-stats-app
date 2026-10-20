@@ -96,53 +96,6 @@
   </div>
 </div>
 
-## Matchup predictions
-
-The retained accuracy changes use the existing simulation and backtest files:
-correct offensive-rebound normalization, preserve fractional pace, tune on up
-to 600 earlier games using the requested history window, and learn home-court
-and rest effects. Candidates fit on earlier dates and are selected by score MAE
-on later dates, then refit on all retained pregame examples. Date boundaries
-keep games from the same day together. Sparse histories keep default adjustment weights.
-
-The optional game date excludes that day's results and later results from
-both inputs and tuning. Without a date, an upcoming scheduled matchup supplies
-the date when available; otherwise completed history before today is used.
-Select the venue to apply home court: the schedule's first/second team order
-is not a home/away designation. Unknown context has no adjustment.
-
-The API returns full-precision scores so the frontend chooses the winner before
-rounding the displayed scores. No win-probability model, score intervals, or
-injury/minutes adjustments are included. The prediction logic is in
-`backtest_mc_sim.py`, with API context in `app/api.py`; there are no separate
-`prediction_model.py` or `matchup_context.py` modules.
-
-Run an evaluation from the backend directory:
-
-```sh
-.venv/bin/python backtest_mc_sim.py --season 2025-26 --season-type regular --recent-games 20 --tune-trials 25
-```
-
-Rebuild Cython extensions after changing `.pyx` files and restart the backend.
-Saved weights use a new cache version so the previous model is not reused.
-
-The reduced model was compared with the originally reviewed tuned model using
-the repository's SQL snapshot, a 20-game history window and at least five prior
-games per team. Holdouts run from 2025-02-28 through 2025-04-13 and from
-2026-02-27 through 2026-04-12. The reduced tuner uses the last 600 earlier games,
-25 trials at 750 iterations, and 3,000 evaluation iterations (seed 20260709,
-one OpenMP thread); the original used all earlier training examples.
-
-| Season | Holdout games | Team-score MAE, original → reduced | Winner accuracy, original → reduced |
-| --- | ---: | ---: | ---: |
-| 2024–25 | 353 | 9.23 → 9.09 | 70.0% → 72.8% |
-| 2025–26 | 345 | 10.19 → 9.93 | 72.2% → 73.6% |
-
-These are exploratory comparisons on reused historical holdouts, not a fresh
-estimate of production accuracy. Removing the probability-based tuning
-objective preserved or improved the measured results. Home/rest effects help
-within this model; injury adjustments were not validated and have been removed.
-
 ## Getting Started
 
 ### Prerequisites
@@ -195,7 +148,7 @@ For this app, you'll need:
    pip install -r requirements.txt
    ```
 
-   Compile the .pyx file:
+   Compile the .pyx files (warnings are negligible):
 
    ```sh
    python setup.py build_ext --inplace
@@ -206,18 +159,6 @@ For this app, you'll need:
    ```sh
    uvicorn main:app
    ```
-
-   The backend warms all available seasons at startup and reuses weights from
-   `nba-stats-python-backend/model_weights.json`. Commit this file to GitHub
-   alongside the source; it contains numeric weights and data fingerprints,
-   with no credentials. Missing or changed season data is retrained and saved
-   automatically. No additional environment variables are needed. After
-   startup, every season is checked every 30 minutes; unchanged weights stay
-   cached, and changed or newly discovered seasons are retrained and saved.
-   Requests use the prior cached snapshot while a replacement is prepared.
-   After changing the tuning or simulation algorithm, increment
-   `MODEL_WEIGHTS_VERSION` in `backtest_api.pyx` and rebuild the extension to
-   regenerate the saved weights.
 
 4. Setup the frontend:
 
@@ -247,11 +188,6 @@ For this app, you'll need:
    ```sh
    redis-server
    ```
-
-   For production, keep Redis running
-   independently from FastAPI and enable
-   Redis persistence so access tokens survive
-   backend restarts and planned maintenance.
 
 6. Setup Google Cloud Platform URI.
    Make sure to go to Google Cloud

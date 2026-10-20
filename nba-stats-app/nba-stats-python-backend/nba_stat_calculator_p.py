@@ -461,7 +461,24 @@ async def player_stat_avg_hm(player_full_name: str,
 
     player_stats_table_columns_str = player_stats_table_query_string()
 
-    query = player_stats_table_columns_str + f"FROM {player_stats_table_name} WHERE player_id = $1 AND season_id = $2"
+    query = player_stats_table_columns_str + f"""FROM {player_stats_table_name}
+    WHERE player_id = $1
+    AND season_id = COALESCE(
+        (
+            SELECT season_id
+            FROM {player_stats_table_name}
+            WHERE player_id = $1
+              AND season_id = $2
+            LIMIT 1
+        ),
+        (
+            SELECT season_id
+            FROM {player_stats_table_name}
+            WHERE player_id = $1
+            ORDER BY game_date DESC
+            LIMIT 1
+        )
+    )"""
 
     player_stats_list_of_tuples = await cur.fetch(query, player_id, season_id)
 
@@ -589,18 +606,30 @@ async def calculate_player_stats_arrays(team: str,
 
     opp_team_regex = opposing_team_abbreviation + '%' if include_opposing_team else ''
 
-    query = f"SELECT 'team' AS stats_side, {player_stats_columns_str} \
-              FROM {player_stats_table_name} \
-              WHERE matchup LIKE $1 AND season_id = $2 \
-              UNION ALL \
-              SELECT 'opp' AS stats_side, {player_stats_columns_str} \
-              FROM {player_stats_table_name} \
-              WHERE $3 AND matchup LIKE $4 AND season_id = $2 \
-              ORDER BY stats_side, player_id"
+    query = f"WITH latest_season AS ( \
+                SELECT season_id \
+                FROM {player_stats_table_name} \
+                WHERE matchup LIKE $1 OR matchup LIKE $3 \
+                GROUP BY season_id \
+                HAVING COUNT(*) FILTER (WHERE matchup LIKE $1) > 0 \
+                AND COUNT(*) FILTER (WHERE matchup LIKE $3) > 0 \
+                ORDER BY MAX(game_date) DESC \
+                LIMIT 1 \
+            ) \
+            SELECT 'team' AS stats_side, {player_stats_columns_str} \
+            FROM {player_stats_table_name} \
+            WHERE matchup LIKE $1 \
+            AND season_id = (SELECT season_id FROM latest_season) \
+            UNION ALL \
+            SELECT 'opp' AS stats_side, {player_stats_columns_str} \
+            FROM {player_stats_table_name} \
+            WHERE $2 \
+            AND matchup LIKE $3 \
+            AND season_id = (SELECT season_id FROM latest_season) \
+            ORDER BY stats_side, player_id"
 
     player_stats_rows = await cur.fetch(query,
                                         team_regex,
-                                        season_id,
                                         include_opposing_team,
                                         opp_team_regex)
 
@@ -611,14 +640,6 @@ async def calculate_player_stats_arrays(team: str,
                                  if row["stats_side"] == "opp"]
 
     if not all_player_stats_info:
-
-        query = f"SELECT season_id FROM {player_stats_table_name} WHERE season_id = $1"
-        
-        season_valid = await cur.fetch(query, season_id)
-
-        if not season_valid:
-
-            return wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code, wrong_season_error_code
         
         return no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code, no_player_stats_error_code
 

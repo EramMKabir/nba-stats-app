@@ -107,6 +107,35 @@ class CythonMatchupTests(unittest.TestCase):
         self.assertEqual(result.team_stats.shape, (20,))
 
 
+# Verify the database lookup that aligns matchup and player-stat seasons.
+class LatestMatchupSeasonTests(unittest.IsolatedAsyncioTestCase):
+    # Confirm the resolver queries the correct phase table and team patterns.
+    async def test_latest_common_season_query(self):
+        connection = AsyncMock()
+        connection.fetchval.return_value = "22024"
+
+        result = await backtest_api._latest_matchup_season_id(
+            connection, backtest_mc_sim, "regular", "NYK", "BOS"
+        )
+
+        query, team_pattern, opponent_pattern = connection.fetchval.await_args.args
+        self.assertIn("FROM nbaplayerstatsregseason", query)
+        self.assertIn("HAVING COUNT(*) FILTER", query)
+        self.assertEqual((team_pattern, opponent_pattern), ("NYK%", "BOS%"))
+        self.assertEqual(result, "22024")
+
+    # Preserve the existing no-data sentinel when no common season exists.
+    async def test_no_common_season_returns_none(self):
+        connection = AsyncMock()
+        connection.fetchval.return_value = None
+
+        result = await backtest_api._latest_matchup_season_id(
+            connection, backtest_mc_sim, "playoffs", "NYK", "BOS"
+        )
+
+        self.assertIsNone(result)
+
+
 # Exercise asynchronous loading, tuning, persistence, and cache coordination.
 class CythonRequestTests(unittest.IsolatedAsyncioTestCase):
     # Give each test empty in-memory caches and an isolated persistence file.
@@ -128,6 +157,19 @@ class CythonRequestTests(unittest.IsolatedAsyncioTestCase):
             setting.start()
             # Guarantee restoration of the original module attribute.
             self.addCleanup(setting.stop)
+        # Keep existing request tests independent of the new database lookup.
+        latest_season = patch.object(
+            backtest_api,
+            "_latest_matchup_season_id",
+            new=AsyncMock(
+                side_effect=lambda connection, backtest, canonical, team, opponent:
+                f"{backtest.SEASON_TYPES[canonical][1]}2025"
+            ),
+        )
+        # Retain the mock so fallback-specific tests can select another season.
+        self.latest_season = latest_season.start()
+        # Restore the real resolver after every request test.
+        self.addCleanup(latest_season.stop)
 
     # Verify a refresh is atomic from the perspective of concurrent requests.
     async def test_requests_use_previous_snapshot_until_refresh_finishes(self):
@@ -217,6 +259,35 @@ class CythonRequestTests(unittest.IsolatedAsyncioTestCase):
         load.assert_awaited_once_with(unittest.mock.ANY, "regular", "22025")
         # Successful aggregation returns the complete stat vector.
         self.assertEqual(result.team_stats.shape, (20,))
+
+    # Verify matchup requests load the latest season shared by both teams.
+    async def test_combined_request_uses_latest_common_season(self):
+        # Make the resolver select an older season than the frontend requested.
+        self.latest_season.side_effect = None
+        self.latest_season.return_value = "22024"
+        games = _games()
+        expected_weights = np.array(backtest_mc_sim.DEFAULT_WEIGHTS, dtype=np.float64)
+        connection = object()
+        # Isolate season selection from database loading and model tuning.
+        with (
+            patch(
+                "backtest_mc_sim.load_games", new=AsyncMock(return_value=games)
+            ) as load,
+            patch(
+                "backtest_api.asyncio.to_thread",
+                new=AsyncMock(return_value=expected_weights),
+            ),
+        ):
+            matchup, weights = (
+                await backtest_api.calculate_matchup_inputs_and_model_weights(
+                    connection, "2025-26", "Regular Season", "A", "B", 5
+                )
+            )
+
+        # The history loader must receive the season chosen for both teams.
+        load.assert_awaited_once_with(connection, "regular", "22024")
+        self.assertEqual(matchup.team_stats.shape, (20,))
+        self.assertIs(weights, expected_weights)
 
     # Verify every tuning parameter crosses the async worker boundary unchanged.
     async def test_weight_request_preserves_training_split(self):

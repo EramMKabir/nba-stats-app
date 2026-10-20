@@ -621,6 +621,36 @@ def build_matchup_team_inputs(
     )
 
 
+# Find the newest player-stat season containing rows for both matchup teams.
+async def _latest_matchup_season_id(
+    connection,
+    object backtest,
+    str canonical_season_type,
+    str team,
+    str opponent,
+):
+    # Resolve the player-stat table used by the matching season phase.
+    suffix = backtest.SEASON_TYPES[canonical_season_type][0]
+    table = f"nbaplayerstats{suffix}"
+    # Match the player-stat query's latest-common-season selection exactly.
+    season_id = await connection.fetchval(
+        f"""
+        SELECT season_id
+        FROM {table}
+        WHERE matchup LIKE $1 OR matchup LIKE $2
+        GROUP BY season_id
+        HAVING COUNT(*) FILTER (WHERE matchup LIKE $1) > 0
+           AND COUNT(*) FILTER (WHERE matchup LIKE $2) > 0
+        ORDER BY MAX(game_date) DESC
+        LIMIT 1
+        """,
+        team + "%",
+        opponent + "%",
+    )
+    # Preserve None so callers can return the established no-data sentinel.
+    return str(season_id) if season_id is not None else None
+
+
 # Load one season through the shared cache and aggregate a requested matchup.
 async def calculate_matchup_team_inputs(
     connection,
@@ -635,8 +665,15 @@ async def calculate_matchup_team_inputs(
     import backtest_mc_sim as backtest
     # Translate frontend season text into a canonical database key.
     canonical = backtest.normalize_season_type(season_type)
-    # Derive the stored NBA season identifier for this canonical phase.
-    season_id = backtest.derive_season_id(season, canonical)
+    # Preserve validation of the frontend season even though data may fall back.
+    backtest.derive_season_id(season, canonical)
+    # Use the same newest season shared by both teams as the player-stat query.
+    season_id = await _latest_matchup_season_id(
+        connection, backtest, canonical, team, opponent
+    )
+    # Match the established insufficient-history sentinel when no season exists.
+    if season_id is None:
+        return 2
     # Reuse a completed or in-flight load for this season snapshot.
     games = await _cached_games(connection, backtest, canonical, season_id)
     # Run the CPU-efficient native aggregation on the loaded games.
@@ -993,9 +1030,16 @@ async def calculate_matchup_inputs_and_model_weights(
     if recent_games <= 0 or min_prior_games <= 0:
         raise ValueError("recent_games and min_prior_games must be positive")
 
-    # Normalize the frontend label and derive the database season identifier.
+    # Normalize the frontend label and validate the requested season format.
     canonical = backtest.normalize_season_type(season_type)
-    season_id = backtest.derive_season_id(season, canonical)
+    backtest.derive_season_id(season, canonical)
+    # Keep team inputs aligned with the player query's latest common season.
+    season_id = await _latest_matchup_season_id(
+        connection, backtest, canonical, team, opponent
+    )
+    # Preserve the combined endpoint's established no-data response.
+    if season_id is None:
+        return 2, 2
     # Fetch one cached snapshot for both feature building and weight fitting.
     games = await _cached_games(connection, backtest, canonical, season_id)
     # Optionally construct a historical as-of view for a pregame prediction.
