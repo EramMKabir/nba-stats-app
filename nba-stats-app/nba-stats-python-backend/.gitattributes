@@ -1,2 +1,0 @@
-schemas.sql filter=lfs diff=lfs merge=lfs -text
-*.sql filter=lfs diff=lfs merge=lfs -text
